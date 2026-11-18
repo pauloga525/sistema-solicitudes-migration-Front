@@ -1,0 +1,79 @@
+@switch (stage()) {
+  @case ('success') {
+    <div class="success">
+      @for (p of particles; track $index) {
+        <span class="particle" aria-hidden="true" [class]="'particle ' + p.anim"
+              [style.top]="p.top" [style.left]="p.left" [style.right]="p.right"
+              [style.width.px]="p.size" [style.height.px]="p.size" [style.background]="p.color" [style.animation-delay]="p.delay"></span>
+      }
+      <main class="card" aria-labelledby="ok-title">
+        <span class="ok-icon"><span class="material-symbols-outlined" aria-hidden="true">check</span></span>
+        <h1 id="ok-title">Solicitud enviada correctamente</h1>
+        <p class="sub">Tu trámite ha sido procesado por el sistema institucional. Guarda o imprime tu comprobante en formato PDF.</p>
+
+        <dl class="facts">
+          <div><dt>ID de Solicitud</dt><dd class="tnum">{{ requestNumber() }}</dd></div>
+          <div><dt>Fecha de Envío</dt><dd class="cap">{{ fecha }}</dd></div>
+        </dl>
+
+        @if (errorMsg()) { <p class="alert alert-error" role="alert"><span class="material-symbols-outlined" aria-hidden="true">error</span>{{ errorMsg() }}</p> }
+
+        <div class="cta">
+          <button type="button" class="btn btn-primary" (click)="descargar()">
+            <span class="material-symbols-outlined" aria-hidden="true">download</span>Descargar PDF
+          </button>
+          <button type="button" class="btn btn-outline strong" (click)="imprimir()" [disabled]="printing()">
+            <span class="material-symbols-outlined" [class.spin]="printing()" aria-hidden="true">{{ printing() ? 'progress_activity' : 'print' }}</span>Imprimir Solicitud
+          </button>
+        </div>
+
+        <div class="links">
+          <button type="button" class="btn btn-text" (click)="go('/estudiante')"><span class="material-symbols-outlined" aria-hidden="true">home</span>Ver mis solicitudes</button>
+          <button type="button" class="btn btn-text" (click)="go('/solicitud')"><span class="material-symbols-outlined" aria-hidden="true">add_circle</span>Realizar nueva solicitud</button>
+        </div>
+
+        <div class="meta">
+          <span><span class="material-symbols-outlined" aria-hidden="true">shield</span>Conexión cifrada de alta seguridad</span>
+          <span class="tnum">Ref: {{ ref }}</span>
+        </div>
+      </main>
+    </div>
+    <app-form-footer />
+  }
+  @case ('error') {
+    <main class="state">
+      <span class="err-icon"><span class="material-symbols-outlined" aria-hidden="true">error</span></span>
+      <h1>Error</h1>
+      <p role="alert">{{ errorMsg() }}</p>
+      <button type="button" class="btn btn-primary" (click)="modificar()">Volver al formulario</button>
+    </main>
+    <app-form-footer />
+  }
+  @default {
+    <div class="viewer">
+      <div class="doc">
+        @if (stage() === 'loading') {
+          <div class="loading" role="status">
+            <span class="material-symbols-outlined spin" aria-hidden="true">progress_activity</span>
+            <p>Generando vista previa...</p>
+          </div>
+        }
+        @if (pdfUrl(); as url) {
+          <iframe [src]="url" title="Vista previa de solicitud"></iframe>
+        }
+      </div>
+      <div class="bar">
+        <div class="bar-inner">
+          <p class="hint">Revise los datos antes de confirmar</p>
+          <div class="bar-actions">
+            <button type="button" class="btn btn-outline" (click)="modificar()" [disabled]="stage() === 'submitting'">Modificar</button>
+            <button type="button" class="btn btn-primary" (click)="submit()" [disabled]="stage() === 'submitting' || stage() === 'loading'">
+              @if (stage() === 'submitting') { <span class="material-symbols-outlined spin" aria-hidden="true">progress_activity</span>Enviando... }
+              @else { Confirmar y Enviar <span class="material-symbols-outlined" aria-hidden="true">send</span> }
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+}

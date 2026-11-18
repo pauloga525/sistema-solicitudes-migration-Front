@@ -1,0 +1,26 @@
+.anio { background: var(--surface-container-lowest); border: 1px solid var(--outline-variant); border-radius: var(--radius-md); overflow: hidden; }
+.anio-head { width: 100%; display: flex; align-items: center; gap: 12px; padding: 14px 18px; border: 0; cursor: pointer; text-align: left;
+  background: none; color: var(--on-surface); transition: background var(--dur-fast); }
+.anio-head:hover { background: #f5f8fc; }
+.anio-head > .material-symbols-outlined:first-child { color: var(--primary-container); }
+.open .anio-head { border-bottom: 1px solid var(--outline-variant); }
+.anio-title { flex: 1; font: var(--title-md); }
+.meta { font: var(--label-md); color: var(--on-surface-variant); }
+.chev { transition: transform var(--dur-med) var(--ease-out); }
+.open .chev { transform: rotate(180deg); }
+.body { padding: 18px; display: grid; gap: 18px; animation: rise var(--dur-med) var(--ease-out); }
+.row3 { display: grid; grid-template-columns: 1.3fr 1fr 1fr; gap: 10px; }
+@media (max-width: 640px) { .row3 { grid-template-columns: 1fr; } }
+.grow { flex: 1; }
+.small .input { min-height: 40px; padding-block: 6px; font: var(--body-md); }
+.tri-head, .ap-head { display: flex; align-items: center; justify-content: space-between; }
+.tri-head h3 { font: var(--label-lg); font-weight: 700; color: var(--on-surface); }
+.add { color: var(--primary-container); }
+.tris { display: grid; gap: 12px; }
+.tri { border: 1px solid var(--outline-variant); background: var(--surface-container-low); border-radius: var(--radius-md); padding: 14px; display: grid; gap: 12px; }
+.tri-row { display: flex; align-items: flex-start; gap: 8px; }
+.aportes { margin-left: 8px; padding-left: 14px; border-left: 1px solid var(--outline-variant); display: grid; gap: 8px; }
+.ap-head span { font: var(--label-sm); letter-spacing: 0.08em; text-transform: uppercase; color: var(--on-surface-variant); }
+.none { color: var(--on-surface-variant); font: var(--body-md); }
+.foot { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding-top: 16px; border-top: 1px solid var(--outline-variant); }
+.dtitle { font: var(--title-lg); }

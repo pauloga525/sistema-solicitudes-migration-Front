@@ -1,0 +1,134 @@
+<app-admin-layout title="Bandeja de solicitudes" lede="Evaluaciones de Mejora recibidas. Al abrir una en revisión queda aprobada (regla del trámite)."
+                  [searchable]="true" [searchValue]="searchInput()" (searchChange)="onSearch($event)">
+  <button layoutActions type="button" class="btn btn-primary" (click)="exportExcel()" [disabled]="!canExport() || result().total === 0 || exporting()"
+          [attr.title]="exportTitle()" [attr.aria-describedby]="canExport() ? null : 'export-hint'">
+    <span class="material-symbols-outlined" [class.spin]="exporting()" aria-hidden="true">{{ exporting() ? 'progress_activity' : 'download' }}</span>
+    {{ exporting() ? 'Generando...' : 'Excel' }}
+  </button>
+
+  <div class="stages" role="group" aria-label="Solicitudes por estado (clic para filtrar)">
+    @for (st of stageOrder; track st) {
+      <button type="button" class="stage" [class.now]="st === actionStage()" [class.sel]="activeFilters().status === st"
+              [style.--bar]="'var(--st-' + st + ')'" (click)="pickStage(st)" [attr.aria-pressed]="activeFilters().status === st">
+        @if (counts(); as c) { <span class="n">{{ c[st] }}</span> } @else { <span class="skeleton" style="height:28px;width:48px"></span> }
+        <span class="key" [class]="'key k-' + st"><span class="sq" aria-hidden="true"></span>{{ estadoLabels[st] }}</span>
+        <span class="cap">{{ activeFilters().status === st ? 'Filtrando' : st === actionStage() ? 'Requiere acción' : ' ' }}</span>
+      </button>
+    }
+  </div>
+
+  <section class="filters" aria-label="Filtros">
+    <div class="field"><label class="field-label" for="f-course">Curso</label>
+      <select id="f-course" class="select" [(ngModel)]="filters.course">
+        <option value="">Todos</option>
+        @for (c of courses; track c) { <option [value]="c">{{ courseLabels[c] ?? c }}</option> }
+      </select></div>
+    <div class="field"><label class="field-label" for="f-par">Paralelo</label>
+      <select id="f-par" class="select" [(ngModel)]="filters.paralelo">
+        <option value="">Todos</option>
+        @for (p of paralelos; track p) { <option [value]="p">{{ p }}</option> }
+      </select></div>
+    <div class="field grow"><label class="field-label" for="f-sub">Materia</label>
+      <select id="f-sub" class="select" [(ngModel)]="filters.subject">
+        <option value="">Todas</option>
+        @for (s of subjectsFor(filters.course); track s) { <option [value]="s">{{ s }}</option> }
+      </select></div>
+    <div class="field"><label class="field-label" for="f-st">Estado</label>
+      <select id="f-st" class="select" [(ngModel)]="filters.status">
+        <option value="">Todos</option>
+        @for (s of statuses; track s) { <option [value]="s">{{ estadoLabels[s] }}</option> }
+      </select></div>
+    <div class="factions">
+      @if (hasFilters()) { <button type="button" class="btn btn-text btn-sm" (click)="clear()">Limpiar</button> }
+      <button type="button" class="btn btn-outline btn-sm" (click)="apply()">Aplicar</button>
+    </div>
+    @if (!canExport()) { <p class="fhint" id="export-hint"><span class="material-symbols-outlined" aria-hidden="true">info</span>Para exportar a Excel, aplica un curso y una materia.</p> }
+  </section>
+
+  @if (error()) {
+    <div class="alert alert-error" role="alert">
+      <span class="material-symbols-outlined" aria-hidden="true">error</span>{{ error() }}
+      <span class="alert-actions"><button type="button" class="link" (click)="refresh()">Reintentar</button></span>
+    </div>
+  }
+  @if (actionError()) {
+    <div class="alert alert-error" role="alert">
+      <span class="material-symbols-outlined" aria-hidden="true">error</span>{{ actionError() }}
+      <span class="alert-actions"><button type="button" class="icon-btn" (click)="actionError.set(null)" aria-label="Cerrar"><span class="material-symbols-outlined">close</span></button></span>
+    </div>
+  }
+
+  <section class="table-wrap" aria-live="polite" [attr.aria-busy]="loading()">
+    @if (loading()) {
+      <div role="status" aria-label="Cargando solicitudes..."><app-skeleton-rows [rows]="7" [cols]="6" /><span class="sr-only">Cargando solicitudes...</span></div>
+    } @else if (result().data.length === 0) {
+      <app-empty icon="inbox" title="No se encontraron solicitudes" [text]="hasFilters() ? 'Prueba con otros filtros o limpia la búsqueda.' : 'Cuando los estudiantes envíen solicitudes aparecerán aquí.'">
+        @if (hasFilters()) { <button type="button" class="btn btn-outline btn-sm" (click)="clear()">Limpiar filtros</button> }
+      </app-empty>
+    } @else {
+      <div class="table-scroll">
+        <table class="dtable">
+          <thead>
+            <tr>
+              <th scope="col">N° Solicitud</th><th scope="col">Estudiante</th><th scope="col">Curso</th>
+              <th scope="col">Materias</th><th scope="col">Estado</th><th scope="col" class="num">Fecha</th>
+              <th scope="col" class="num"><span class="sr-only">Acciones</span></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (s of result().data; track s._id) {
+              <tr class="clickable" (click)="ver(s._id)">
+                <td class="mono"><a class="cell-link" [routerLink]="['/admin/solicitudes', s._id]" (click)="$event.stopPropagation()">{{ s.requestNumber ?? s._id.slice(-6) }}</a></td>
+                <td><span class="strong">{{ s.studentName }}</span><span class="sub">{{ s.representativeName }}</span></td>
+                <td class="nowrap" [attr.title]="'Campus ' + humanize(s.campus)">{{ courseLabels[s.course] ?? humanize(s.course) }} {{ s.paralelo }}</td>
+                <td class="subj opt">{{ (s.payload.subjects ?? []).join(', ') }}</td>
+                <td><span class="key" [class]="'key k-' + s.status"><span class="sq" aria-hidden="true"></span>{{ estadoLabels[s.status] ?? s.status }}</span></td>
+                <td class="num mono muted opt">{{ s.createdAt | date: 'dd MMM y' }}</td>
+                <td class="num">
+                  <div class="row-actions">
+                    @let acc = acciones(s);
+                    @if (acc.includes('aprobar')) {
+                      <button type="button" class="icon-btn ok" title="Aprobar" aria-label="Aprobar" [disabled]="actionLoading() === s._id" (click)="aprobar($event, s._id)">
+                        <span class="material-symbols-outlined" [class.spin]="actionLoading() === s._id">{{ actionLoading() === s._id ? 'progress_activity' : 'check' }}</span></button>
+                    }
+                    @if (acc.includes('negar')) {
+                      <button type="button" class="icon-btn bad" title="Negar" aria-label="Negar" [disabled]="actionLoading() === s._id" (click)="openDeny($event, s._id)">
+                        <span class="material-symbols-outlined">close</span></button>
+                    }
+                    @if (acc.includes('imprimir')) {
+                      <button type="button" class="icon-btn" title="Imprimir" aria-label="Imprimir" [disabled]="printLoading() === s._id" (click)="imprimir($event, s._id)">
+                        <span class="material-symbols-outlined" [class.spin]="printLoading() === s._id">{{ printLoading() === s._id ? 'progress_activity' : 'print' }}</span></button>
+                    }
+                    @if (acc.includes('ver')) {
+                      <button type="button" class="icon-btn" title="Ver detalle" aria-label="Ver detalle" (click)="$event.stopPropagation(); ver(s._id)">
+                        <span class="material-symbols-outlined">chevron_right</span></button>
+                    }
+                  </div>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+      <app-pager [page]="result().page" [pageSize]="result().pageSize" [total]="result().total" [totalPages]="result().totalPages" (go)="goPage($event)" />
+    }
+  </section>
+
+  <dialog #deny class="dialog" aria-labelledby="deny-title" (close)="denyTarget.set(null)">
+    <div class="dialog-head">
+      <span class="d-icon"><span class="material-symbols-outlined" aria-hidden="true">block</span></span>
+      <h2 id="deny-title" class="d-title">Negar solicitud</h2>
+    </div>
+    <div class="dialog-body">
+      <p>Escribe el motivo. Lo verá el estudiante y queda en el historial de la solicitud.</p>
+      <label class="sr-only" for="deny-reason">Motivo del rechazo</label>
+      <textarea id="deny-reason" class="textarea" rows="3" placeholder="Ej: Documentación incompleta..." [(ngModel)]="denyReason"></textarea>
+    </div>
+    <div class="dialog-actions">
+      <button type="button" class="btn btn-text" (click)="closeDeny()">Cancelar</button>
+      <button type="button" class="btn btn-danger" (click)="confirmDeny()" [disabled]="actionLoading() === denyTarget() || !denyReason.trim()">
+        {{ actionLoading() === denyTarget() && denyTarget() ? 'Procesando...' : 'Confirmar negación' }}
+      </button>
+    </div>
+  </dialog>
+</app-admin-layout>

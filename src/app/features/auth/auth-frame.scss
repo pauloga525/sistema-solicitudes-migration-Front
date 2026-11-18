@@ -1,0 +1,41 @@
+.login { min-height: 100vh; min-height: 100dvh; display: grid; grid-template-columns: 1.6fr 1fr; background: var(--surface); }
+.visual { position: relative; overflow: hidden; background: var(--primary); color: #fff; display: flex; align-items: center; isolation: isolate; }
+.visual > img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0; z-index: -2; transition: opacity 900ms var(--ease-out); }
+.visual > img.on { opacity: 0.32; }
+.shade { position: absolute; inset: 0; z-index: -1; background: linear-gradient(35deg, rgb(0 39 83 / 92%) 25%, rgb(0 39 83 / 45%) 70%, rgb(0 39 83 / 15%)); }
+.visual-copy { padding: clamp(32px, 6vw, 80px); max-width: 720px; }
+.crest { width: 88px; height: 88px; margin-bottom: 32px; filter: drop-shadow(0 6px 18px rgb(0 0 0 / 35%)); }
+h1 { font: var(--display-lg); font-size: clamp(2.25rem, 4vw, 3.5rem); letter-spacing: -0.03em; max-width: 16ch; }
+.visual-copy p { margin-top: 18px; color: var(--primary-fixed); font: var(--body-lg); font-size: 1.0625rem; max-width: 52ch; }
+.pill { margin-top: 32px; display: inline-flex; align-items: center; gap: 8px; padding: 8px 16px; border-radius: var(--radius-full);
+  background: rgb(255 255 255 / 10%); border: 1px solid rgb(255 255 255 / 20%); font: var(--label-lg);
+  .material-symbols-outlined { color: var(--primary-fixed-dim); font-size: 18px; } }
+.campus-label { position: absolute; left: 0; right: 0; bottom: 0; padding: 40px 32px 18px; background: linear-gradient(to top, rgb(0 0 0 / 45%), transparent);
+  font: var(--label-md); color: rgb(255 255 255 / 90%); }
+.panel-side { display: grid; place-items: center; padding: 40px 24px; position: relative;
+  background-image: radial-gradient(circle at 2px 2px, rgb(0 39 83 / 6%) 1px, transparent 0); background-size: 24px 24px; }
+.box { width: min(380px, 100%); }
+.crest-sm { width: 64px; height: 64px; margin-bottom: 24px; }
+@media (min-width: 861px) { .crest-sm { display: none; } }
+h2 { font: var(--headline-lg); color: var(--primary); }
+.sub { margin-top: 6px; color: var(--on-surface-variant); }
+form { margin-top: 32px; display: grid; gap: 20px; }
+.with-icon { position: relative; }
+.with-icon .lead { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--on-surface-variant); pointer-events: none; }
+.with-icon .input { padding-left: 46px; min-height: 52px; background: var(--surface-container-lowest); }
+.with-icon .input.pad-r { padding-right: 52px; }
+.with-icon:focus-within .lead { color: var(--primary-container); }
+.eye { position: absolute; right: 6px; top: 50%; transform: translateY(-50%); }
+.submit { min-height: 54px; font: var(--title-md); margin-top: 8px; box-shadow: var(--elev-2); }
+.links { margin-top: 24px; display: grid; gap: 10px; font: var(--body-md); color: var(--on-surface-variant); }
+.links a { color: var(--primary-container); font-weight: 600; }
+.notice { margin-top: 20px; }
+.rules { margin: 4px 0 0; padding-left: 18px; font: var(--body-md); color: var(--on-surface-variant); display: grid; gap: 2px; }
+.rules li.ok { color: var(--success); }
+@media (prefers-reduced-motion: reduce) { .visual > img { transition: none; } }
+.sso { margin-top: 28px; display: grid; gap: 10px; }
+.divider { display: flex; align-items: center; gap: 12px; margin: 22px 0 -10px; color: var(--on-surface-variant); font: var(--label-md); font-weight: 400; }
+.divider::before, .divider::after { content: ''; flex: 1; height: 1px; background: var(--outline-variant); }
+
+// Al final: en pantallas angostas se oculta el panel de fotos (debe ir después de la regla base de .visual).
+@media (max-width: 860px) { .login { grid-template-columns: 1fr; } .visual { display: none; } }

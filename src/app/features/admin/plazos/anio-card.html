@@ -1,0 +1,80 @@
+<section class="anio" [class.open]="expanded()">
+  <button type="button" class="anio-head" (click)="expanded.set(!expanded())" [attr.aria-expanded]="expanded()">
+    <span class="material-symbols-outlined" aria-hidden="true">calendar_month</span>
+    <span class="anio-title">{{ form.controls.name.value || 'Nuevo año lectivo' }}</span>
+    @if (!isNew && anio().trimestres.length) { <span class="meta tnum">{{ anio().trimestres.length }} {{ anio().trimestres.length === 1 ? 'trimestre' : 'trimestres' }}</span> }
+    <span class="material-symbols-outlined chev" aria-hidden="true">expand_more</span>
+  </button>
+
+  @if (expanded()) {
+    <form class="body" [formGroup]="form" (ngSubmit)="save()">
+      @if (error()) { <p class="alert alert-error" role="alert"><span class="material-symbols-outlined" aria-hidden="true">error</span>{{ error() }}</p> }
+
+      <div class="row3">
+        <div class="field"><label class="field-label" [for]="'n-' + (anio()._id ?? 'new')">Nombre del año</label>
+          <input class="input" [id]="'n-' + (anio()._id ?? 'new')" formControlName="name" placeholder="Ej: 2026-2027" /></div>
+        <div class="field"><label class="field-label" [for]="'s-' + (anio()._id ?? 'new')">Inicio</label>
+          <input class="input" type="date" [id]="'s-' + (anio()._id ?? 'new')" formControlName="startDate" /></div>
+        <div class="field"><label class="field-label" [for]="'e-' + (anio()._id ?? 'new')">Fin</label>
+          <input class="input" type="date" [id]="'e-' + (anio()._id ?? 'new')" formControlName="endDate" /></div>
+      </div>
+
+      <div class="tri-head">
+        <h3>Trimestres</h3>
+        <button type="button" class="btn btn-text btn-sm add" (click)="addTrimestre()"><span class="material-symbols-outlined" aria-hidden="true">add</span>Agregar trimestre</button>
+      </div>
+
+      <div formArrayName="trimestres" class="tris">
+        @for (t of trimestres.controls; track t; let i = $index) {
+          <div class="tri" [formGroupName]="i">
+            <div class="tri-row">
+              <div class="row3 grow">
+                <input class="input" formControlName="name" placeholder="Ej: Primer Trimestre" aria-label="Nombre del trimestre" />
+                <input class="input" type="date" formControlName="startDate" aria-label="Inicio del trimestre" />
+                <input class="input" type="date" formControlName="endDate" aria-label="Fin del trimestre" />
+              </div>
+              <button type="button" class="icon-btn danger" (click)="removeTrimestre(i)" title="Quitar trimestre" aria-label="Quitar trimestre">
+                <span class="material-symbols-outlined">delete</span></button>
+            </div>
+
+            <div class="aportes" formArrayName="aportes">
+              <div class="ap-head">
+                <span>Aportes</span>
+                <button type="button" class="btn btn-text btn-sm add" (click)="addAporte(i)"><span class="material-symbols-outlined" aria-hidden="true">add</span>Agregar aporte</button>
+              </div>
+              @for (a of aportes(i).controls; track a; let j = $index) {
+                <div class="tri-row" [formGroupName]="j">
+                  <div class="row3 grow small">
+                    <input class="input" formControlName="name" placeholder="Ej: 1er Aporte" aria-label="Nombre del aporte" />
+                    <input class="input" type="date" formControlName="startDate" aria-label="Inicio del aporte" />
+                    <input class="input" type="date" formControlName="endDate" aria-label="Fin del aporte" />
+                  </div>
+                  <button type="button" class="icon-btn danger" (click)="removeAporte(i, j)" title="Quitar aporte" aria-label="Quitar aporte">
+                    <span class="material-symbols-outlined">close</span></button>
+                </div>
+              } @empty { <p class="none">Sin aportes aún.</p> }
+            </div>
+          </div>
+        } @empty { <p class="none">Sin trimestres aún.</p> }
+      </div>
+
+      <div class="foot">
+        @if (isNew) {
+          <button type="button" class="btn btn-text" (click)="discarded.emit(null)">Cancelar</button>
+        } @else {
+          <button type="button" class="btn btn-danger-outline btn-sm" (click)="askDelete()" [disabled]="saving()">Eliminar año lectivo</button>
+        }
+        <button type="submit" class="btn btn-primary" [disabled]="saving()">{{ saving() ? 'Guardando...' : 'Guardar' }}</button>
+      </div>
+    </form>
+  }
+
+  <dialog #confirm class="dialog" aria-labelledby="del-title">
+    <div class="dialog-head"><h2 id="del-title" class="dtitle">¿Eliminar el año lectivo "{{ form.controls.name.value }}"?</h2></div>
+    <div class="dialog-body"><p>Esta acción no se puede deshacer.</p></div>
+    <div class="dialog-actions">
+      <button type="button" class="btn btn-text" (click)="closeConfirm()">Cancelar</button>
+      <button type="button" class="btn btn-danger" (click)="remove()">Eliminar</button>
+    </div>
+  </dialog>
+</section>

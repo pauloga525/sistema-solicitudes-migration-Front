@@ -1,0 +1,12 @@
+.stages .stage { border: 0; border-right: 1px solid var(--outline-variant); background: none; text-align: left; cursor: pointer; font: inherit; color: inherit; }
+.stages .stage:last-child { border-right: 0; }
+.stages .stage:hover { background: var(--surface-container-low); }
+.factions { display: flex; gap: 6px; align-items: flex-end; margin-left: auto; }
+.fhint { flex-basis: 100%; display: flex; align-items: center; gap: 6px; font: var(--label-md); font-weight: 400; color: var(--on-surface-variant);
+  .material-symbols-outlined { font-size: 16px; } }
+.subj { max-width: 280px; color: var(--on-surface-variant); }
+.icon-btn.ok { color: var(--success); }
+.icon-btn.bad { color: var(--error); }
+tbody tr:focus-visible { outline: 2px solid var(--surface-tint); outline-offset: -2px; box-shadow: none; }
+.d-icon { width: 40px; height: 40px; display: grid; place-items: center; border-radius: 10px; background: var(--error-container); color: var(--error); flex: none; }
+.d-title { font: var(--title-lg); }

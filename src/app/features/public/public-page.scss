@@ -1,0 +1,12 @@
+// Estilos compartidos de las páginas del flujo público (selección, trámites, formulario).
+:host { display: flex; flex-direction: column; min-height: 100vh; min-height: 100dvh; background: var(--background); }
+.page { width: 100%; max-width: 880px; margin: 0 auto; padding: clamp(28px, 5vw, 56px) var(--gutter) 64px; flex: 1; }
+.page.narrow { max-width: 720px; }
+.back { display: inline-flex; align-items: center; gap: 6px; padding: 6px 10px 6px 4px; margin: 0 0 24px -4px; border: 0; background: none;
+  color: var(--on-surface-variant); font: var(--label-lg); cursor: pointer; border-radius: var(--radius-sm);
+  .material-symbols-outlined { font-size: 18px; } &:hover { color: var(--primary); } }
+.head { margin-bottom: 28px; }
+.head h1 { font: var(--headline-lg); color: var(--on-surface); letter-spacing: -0.02em; }
+.head p { margin-top: 8px; color: var(--on-surface-variant); font: var(--body-lg); max-width: 60ch; }
+.context { font: var(--label-lg); color: var(--primary-container); margin-bottom: 6px; display: block; }
+.actions-end { display: flex; justify-content: flex-end; margin-top: 28px; }

@@ -1,0 +1,164 @@
+// ════════════════════════════════════════════════════════════════════
+// Lenguaje de los paneles de trabajo (SUPERADMIN, ADMIN, estudiante)
+// Modo "operar": densidad, lectura rápida, color solo para estado y acción.
+// Referencia: sistema "Horario" de PUM (riel azul marino, claves cuadradas,
+// franja de etapas con la etapa que pide acción en dorado, tablas densas).
+// ════════════════════════════════════════════════════════════════════
+:root {
+  --rail: #00214a;            // riel lateral (más profundo que --primary para separar del contenido)
+  --rail-hover: #0a3264;
+  --rail-ink: #c9d8ee;
+  --rail-ink-strong: #ffffff;
+  --rail-w: 248px;
+  --st-pendiente: #c99700; --st-en_revision: #335f9d; --st-aprobado: #1b7a43; --st-rechazado: #ba1a1a; --st-cancelado: #8a909c;
+  --row-h: 44px;
+}
+
+// ── Encabezado de página ──
+.page-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+.page-head h1 { font: var(--headline-md); color: var(--on-surface); letter-spacing: -0.02em; }
+.page-head .lede { margin-top: 4px; color: var(--on-surface-variant); font: var(--body-md); max-width: 70ch; }
+.page-head .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+
+// ── Clave de estado cuadrada ──
+.key { display: inline-flex; align-items: center; gap: 8px; font: var(--label-md); color: var(--on-surface); white-space: nowrap; }
+.key .sq { width: 10px; height: 10px; border-radius: 2px; background: var(--outline); flex: none; }
+@each $s in pendiente, en_revision, aprobado, rechazado, cancelado {
+  .k-#{$s} .sq { background: var(--st-#{$s}); }
+}
+
+// ── Franja de etapas ──
+.stages { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); border: 1px solid var(--outline-variant); border-radius: var(--radius-md);
+  overflow: hidden; background: var(--surface-container-lowest); }
+.stage { position: relative; display: grid; gap: 6px; padding: 14px 16px 16px; text-decoration: none; color: inherit; border-right: 1px solid var(--outline-variant);
+  transition: background var(--dur-fast); }
+.stage:last-child { border-right: 0; }
+a.stage:hover { background: var(--surface-container-low); }
+.stage .n { font: 650 1.75rem/1.1 var(--font-sans); letter-spacing: -0.02em; font-variant-numeric: tabular-nums; color: var(--on-surface); }
+.stage .cap { font: var(--label-md); color: var(--on-surface-variant); }
+.stage.now { background: #fff6d6; box-shadow: inset 0 -4px 0 var(--secondary-container); }
+.stage.now .cap { color: #5c4700; font-weight: 650; }
+// En el celular la franja se desliza en horizontal: las cinco etapas en una fila, sin ocupar media pantalla.
+@media (max-width: 760px) { .stages { grid-template-columns: none; grid-auto-flow: column; grid-auto-columns: minmax(118px, 1fr); overflow-x: auto;
+  scroll-snap-type: x mandatory; overscroll-behavior-x: contain; } .stage { scroll-snap-align: start; padding: 12px 14px 14px; } .stage .n { font-size: 1.5rem; } }
+
+// ── Bloques de cifras (agrupados, no tarjetas iguales) ──
+.figures { display: grid; grid-template-columns: repeat(auto-fit, minmax(264px, 1fr)); gap: 14px; }
+.fig-block { background: var(--surface-container-lowest); border: 1px solid var(--outline-variant); border-radius: var(--radius-md); padding: 16px 18px; }
+.fig-block h2 { font: var(--title-md); display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+.fig-block h2 a { margin-left: auto; font: var(--label-md); text-decoration: none; white-space: nowrap; }
+.fig-list dd { white-space: nowrap; }
+.stages .stage.sel { box-shadow: inset 0 0 0 2px var(--primary-container); }
+.stage:focus-visible { outline-offset: -3px; }
+.fig-list { display: grid; margin: 0; }
+.fig-list > div { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; padding: 7px 0; border-top: 1px dashed var(--surface-container-highest); }
+.fig-list > div:first-child { border-top: 0; }
+.fig-list dt { color: var(--on-surface-variant); }
+.fig-list dd { margin: 0; font: 600 0.9375rem/1.3 var(--font-sans); font-variant-numeric: tabular-nums; }
+.fig-list dd.warn { color: var(--warning); }
+.fig-list dd.bad { color: var(--error); }
+
+// ── Barra de filtros ──
+.filters { display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-end; padding: 12px; background: var(--surface-container-lowest);
+  border: 1px solid var(--outline-variant); border-radius: var(--radius-md); }
+.filters .field { min-width: 0; flex: 0 1 160px; gap: 4px; }
+.filters .field.grow { flex: 1 1 260px; }
+.filters .input, .filters .select { min-height: 38px; padding-block: 6px; font: var(--body-md); }
+.filters input[type='date'] { width: 150px; }
+.filters .clear-all { margin-left: auto; }
+
+// ── Tabla densa con encabezado fijo ──
+.table-wrap { background: var(--surface-container-lowest); border: 1px solid var(--outline-variant); border-radius: var(--radius-md); overflow: hidden; }
+.table-scroll { overflow: auto; max-height: calc(100dvh - 300px); min-height: 200px; }
+.dtable { width: 100%; border-collapse: separate; border-spacing: 0; font: var(--body-md); }
+.dtable th { position: sticky; top: 0; z-index: 2; background: var(--surface-container-low); text-align: left; font: var(--label-sm);
+  text-transform: uppercase; letter-spacing: 0.04em; color: var(--on-surface-variant); padding: 10px 14px; border-bottom: 1px solid var(--outline-variant); white-space: nowrap; }
+.dtable td { padding: 10px 14px; border-bottom: 1px solid var(--surface-container-high); vertical-align: middle; height: var(--row-h); }
+.dtable tr:last-child td { border-bottom: 0; }
+.dtable tbody tr { transition: background var(--dur-fast); }
+.dtable tbody tr:hover { background: #f5f8fc; }
+.dtable tbody tr.clickable { cursor: pointer; }
+.dtable .num { text-align: right; font-variant-numeric: tabular-nums; }
+.dtable .mono { font-variant-numeric: tabular-nums; letter-spacing: 0.01em; white-space: nowrap; }
+.dtable .muted, .muted { color: var(--on-surface-variant); }
+.dtable .nowrap, .nowrap { white-space: nowrap; }
+.dtable .strong { font-weight: 600; color: var(--on-surface); }
+.dtable .sub { display: block; font: var(--label-md); font-weight: 400; color: var(--on-surface-variant); margin-top: 1px; }
+.dtable .row-actions { display: flex; gap: 4px; justify-content: flex-end; }
+.dtable a.cell-link { color: inherit; text-decoration: none; font-weight: 600; }
+.dtable a.cell-link:hover { color: var(--primary-container); text-decoration: underline; }
+
+// ── Etiquetas pequeñas ──
+.tag { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 6px; font: var(--label-sm); letter-spacing: 0.02em;
+  background: var(--surface-container-high); color: var(--on-surface-variant); white-space: nowrap; }
+.tag.ok { background: var(--success-container); color: var(--on-success-container); }
+.tag.bad { background: var(--error-container); color: var(--on-error-container); }
+.tag.warn { background: var(--warning-container); color: #4a2c00; }
+.tag.info { background: var(--primary-fixed); color: var(--on-primary-fixed); }
+.tag.gold { background: var(--secondary-fixed); color: #4d3b00; }
+
+// ── Secciones y paneles de detalle ──
+.section { background: var(--surface-container-lowest); border: 1px solid var(--outline-variant); border-radius: var(--radius-md); }
+.section > header { display: flex; align-items: center; gap: 10px; padding: 14px 18px; border-bottom: 1px solid var(--outline-variant); }
+.section > header h2 { font: var(--title-md); }
+.section > header .end { margin-left: auto; display: flex; gap: 8px; }
+.section > .body { padding: 16px 18px; }
+.kv { display: grid; grid-template-columns: max-content 1fr; gap: 8px 20px; margin: 0; }
+.kv dt { color: var(--on-surface-variant); font: var(--label-md); padding-top: 1px; }
+.kv dd { margin: 0; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.split { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(300px, 1fr); gap: 16px; align-items: start; }
+@media (max-width: 1080px) { .split { grid-template-columns: 1fr; } }
+
+// ── Línea de tiempo de auditoría ──
+.timeline { list-style: none; margin: 0; padding: 0; display: grid; }
+.timeline li { position: relative; padding: 0 0 16px 22px; }
+.timeline li::before { content: ''; position: absolute; left: 4px; top: 6px; width: 8px; height: 8px; border-radius: 2px; background: var(--outline); }
+.timeline li::after { content: ''; position: absolute; left: 7.5px; top: 18px; bottom: 2px; width: 1px; background: var(--outline-variant); }
+.timeline li:last-child::after { display: none; }
+.timeline li.corr::before { background: var(--secondary-container); outline: 2px solid #c99700; outline-offset: 0; }
+.timeline .what { font-weight: 600; }
+.timeline .meta { font: var(--label-md); font-weight: 400; color: var(--on-surface-variant); margin-top: 2px; }
+.timeline .note { margin-top: 6px; padding: 8px 10px; background: var(--surface-container-low); border-radius: 8px; font: var(--body-md); }
+
+// ── Pestañas simples ──
+.tabs { display: flex; gap: 2px; border-bottom: 1px solid var(--outline-variant); overflow-x: auto; }
+.tabs button, .tabs a { border: 0; background: none; padding: 10px 14px; font: var(--label-lg); color: var(--on-surface-variant); cursor: pointer;
+  border-bottom: 2px solid transparent; margin-bottom: -1px; white-space: nowrap; text-decoration: none; }
+.tabs [aria-selected='true'], .tabs a.active { color: var(--primary); border-bottom-color: var(--primary); }
+
+// ── Diálogo lateral (detalle sin perder la lista) ──
+dialog.sheet { margin: 0 0 0 auto; height: 100dvh; max-height: 100dvh; width: min(560px, 100vw); padding: 0; border: 0;
+  background: var(--surface-container-lowest); box-shadow: var(--elev-3); color: var(--on-surface);
+  &::backdrop { background: var(--scrim); }
+  &[open] { animation: sheet-in var(--dur-med) var(--ease-out); }
+  .sheet-head { position: sticky; top: 0; z-index: 2; display: flex; align-items: center; gap: 10px; padding: 16px 20px; background: inherit; border-bottom: 1px solid var(--outline-variant); }
+  .sheet-head h2 { font: var(--title-lg); flex: 1; }
+  .sheet-body { padding: 18px 20px; display: grid; gap: 16px; }
+}
+@keyframes sheet-in { from { transform: translateX(24px); opacity: 0; } }
+
+.temp-pass { display: flex; align-items: center; gap: 10px; padding: 14px 16px; border-radius: 10px; background: var(--inverse-surface); color: #fff;
+  font: 600 1.25rem/1.2 var(--font-sans); letter-spacing: 0.06em; font-variant-numeric: tabular-nums; }
+.temp-pass button { margin-left: auto; }
+.form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; align-items: start; }
+.form-actions { display: flex; justify-content: flex-end; gap: 8px; flex-wrap: wrap; }
+
+// Las páginas que carga el router son el hijo directo del contenedor: heredan el ritmo vertical.
+main.content > :not(router-outlet), main.student-main > :not(router-outlet) { display: flex; flex-direction: column; gap: 18px; min-width: 0; }
+
+// Controles más compactos dentro de los paneles de trabajo (en pantallas táctiles se mantiene 16 px para evitar el zoom de iOS).
+main.content :is(.input, .select, .textarea) { min-height: 40px; padding: 8px 12px; font: var(--body-md); }
+main.content .select { padding-right: 36px; }
+@media (pointer: coarse) { main.content :is(.input, .select, .textarea) { font-size: 1rem; } }
+
+// ── Tablas en el celular: cada fila se vuelve una ficha compacta (sin desplazamiento lateral) ──
+@media (max-width: 760px) {
+  .dtable thead { display: none; }
+  .dtable, .dtable tbody { display: block; }
+  .dtable tr { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 12px; padding: 12px 14px; border-bottom: 1px solid var(--surface-container-high); }
+  .dtable td { display: block; height: auto; padding: 0; border: 0; min-width: 0; }
+  .dtable td.num { text-align: left; }
+  .dtable td.opt { grid-column: 1 / -1; font: var(--label-md); font-weight: 400; color: var(--on-surface-variant); max-width: none; }
+  .dtable .row-actions { justify-content: flex-start; }
+  .table-scroll { max-height: none; }
+}

@@ -1,0 +1,112 @@
+<app-admin-layout [title]="title()" backTo="/admin/dashboard" backLabel="Bandeja de solicitudes"
+>
+  @if (solicitud(); as s) {
+    <p layoutLede class="lede ld">
+      <span class="key" [class]="'key k-' + status()"><span class="sq" aria-hidden="true"></span>{{ estado().label }}</span>
+      · Evaluación de Mejora · recibida el {{ s.createdAt | date: "dd 'de' MMMM 'de' y, HH:mm" }}</p>
+  }
+  @if (!loading() && !error()) {
+    <div layoutActions class="head-acts">
+      <button type="button" class="btn btn-outline btn-sm" (click)="print()" [disabled]="printLoading()">
+        <span class="material-symbols-outlined" [class.spin]="printLoading()" aria-hidden="true">{{ printLoading() ? 'progress_activity' : 'print' }}</span>Imprimir</button>
+      <button type="button" class="btn btn-primary btn-sm" (click)="download()" [disabled]="pdfLoading()">
+        <span class="material-symbols-outlined" [class.spin]="pdfLoading()" aria-hidden="true">{{ pdfLoading() ? 'progress_activity' : 'download' }}</span>Descargar PDF</button>
+    </div>
+  }
+
+  @if (loading()) {
+    <div class="section" role="status" aria-label="Cargando solicitud..."><div class="body"><span class="skeleton" style="height:220px;display:block"></span></div></div>
+  } @else if (error()) {
+    <div class="section"><div class="body state">
+      <span class="material-symbols-outlined big-icon err" aria-hidden="true">error</span>
+      <p role="alert">{{ error() }}</p>
+      <a class="btn btn-primary" routerLink="/admin/dashboard">Volver a la lista</a>
+    </div></div>
+  } @else if (solicitud(); as s) {
+    @if (actionError() && !denyOpen()) {
+      <div class="alert alert-error" role="alert">
+        <span class="material-symbols-outlined" aria-hidden="true">error</span>{{ actionError() }}
+        <span class="alert-actions"><button type="button" class="icon-btn" (click)="actionError.set(null)" aria-label="Cerrar"><span class="material-symbols-outlined">close</span></button></span>
+      </div>
+    }
+    @if (!isProcesoMejora() && isPending()) {
+      <div class="decide">
+        <p><strong>Esta solicitud espera tu decisión.</strong> Al negarla, el motivo queda registrado y lo ve el estudiante.</p>
+        <div class="acts">
+          <button type="button" class="btn btn-danger-outline btn-sm" (click)="openDeny()" [disabled]="actionLoading()">Negar</button>
+          <button type="button" class="btn btn-success btn-sm" (click)="approve()" [disabled]="actionLoading()">{{ actionLoading() ? 'Procesando...' : 'Aprobar' }}</button>
+        </div>
+      </div>
+    }
+
+    <div class="split">
+      <section class="section" aria-labelledby="h-sol">
+        <header><h2 id="h-sol">Solicitud</h2></header>
+        <div class="body">
+          <dl class="kv">
+            <dt>Número</dt><dd class="mono strong">{{ s.requestNumber }}</dd>
+            <dt>Curso</dt><dd>{{ humanize(s.course) }}, paralelo {{ s.paralelo }}</dd>
+            <dt>Campus</dt><dd>{{ humanize(s.campus) }}</dd>
+            <dt>Fecha</dt><dd>{{ s.createdAt | date: "dd 'de' MMMM 'de' y, HH:mm" }}</dd>
+            @if (s.payload?.subjects?.length) {
+              <dt>Materias</dt><dd>{{ s.payload.subjects!.join(', ') }}</dd>
+            }
+          </dl>
+          @if (status() === 'rechazado' && s.rejectionReason) {
+            <div class="reason">
+              <p class="r-title">Motivo de la negación</p>
+              <p>{{ s.rejectionReason }}</p>
+              @if (s.rejectedAt) {
+                <p class="reason-meta">Rechazada el {{ s.rejectedAt | date: "dd 'de' MMMM 'de' y, HH:mm" }}@if (s.rejectedBy) { por {{ s.rejectedBy }}}</p>
+              }
+            </div>
+          }
+        </div>
+      </section>
+
+      <div class="col">
+        <section class="section" aria-labelledby="h-hist">
+          <header><span class="material-symbols-outlined" aria-hidden="true">history</span><h2 id="h-hist">Historial</h2></header>
+          <div class="body">
+            <ol class="timeline">
+              @for (e of history(); track e.id) {
+                <li>
+                  <div class="what">{{ e.eventLabel }}@if (e.toStatus) {<span class="tr">{{ e.fromStatus ? estadoLabel(e.fromStatus) + ' → ' : '' }}{{ estadoLabel(e.toStatus) }}</span>}</div>
+                  <div class="meta">{{ e.createdAt | date: "dd MMM y, HH:mm" }} · {{ e.actorName || 'Sistema' }}@if (e.actorRoleLabel) { ({{ e.actorRoleLabel }}) }</div>
+                  @if (e.comment) { <div class="note">{{ e.comment }}</div> }
+                </li>
+              } @empty { <li><div class="what">Sin eventos registrados</div><div class="meta">Solicitud anterior al registro de auditoría.</div></li> }
+            </ol>
+          </div>
+        </section>
+        <section class="section" aria-labelledby="h-est">
+          <header><span class="material-symbols-outlined" aria-hidden="true">school</span><h2 id="h-est">Estudiante</h2></header>
+          <div class="body"><dl class="kv"><dt>Nombre</dt><dd>{{ s.studentName }}</dd><dt>Cédula</dt><dd class="mono">{{ s.studentDni }}</dd></dl></div>
+        </section>
+        <section class="section" aria-labelledby="h-rep">
+          <header><span class="material-symbols-outlined" aria-hidden="true">family_restroom</span><h2 id="h-rep">Representante</h2></header>
+          <div class="body"><dl class="kv"><dt>Nombre</dt><dd>{{ s.representativeName }}</dd><dt>Cédula</dt><dd class="mono">{{ s.representativeDni }}</dd></dl></div>
+        </section>
+      </div>
+    </div>
+
+    @if (!isProcesoMejora()) {
+      <dialog #deny class="dialog" aria-labelledby="deny-title" (close)="denyOpen.set(false)">
+        <div class="dialog-head">
+          <span class="d-icon"><span class="material-symbols-outlined" aria-hidden="true">block</span></span>
+          <h2 id="deny-title" class="d-title">Negar solicitud</h2>
+        </div>
+        <div class="dialog-body">
+          <p>Escribe el motivo. Lo verá el estudiante y queda en el historial.</p>
+          <label class="sr-only" for="deny-reason">Motivo del rechazo</label>
+          <textarea id="deny-reason" class="textarea" rows="4" placeholder="Ej: Documentación incompleta o no legible..." [(ngModel)]="denyReason"></textarea>
+          @if (actionError()) { <p class="field-error">{{ actionError() }}</p> }
+        </div>
+        <div class="dialog-actions">
+          <button type="button" class="btn btn-text" (click)="closeDeny()">Cancelar</button>
+          <button type="button" class="btn btn-danger" (click)="confirmDeny()" [disabled]="actionLoading()">{{ actionLoading() ? 'Procesando...' : 'Confirmar negación' }}</button>
+        </div>
+      </dialog>
+    }
+  }
+</app-admin-layout>

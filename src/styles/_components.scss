@@ -1,0 +1,111 @@
+// ── Botones ─────────────────────────────────────────────────────────────
+.btn {
+  --btn-bg: var(--surface-container-high); --btn-fg: var(--on-surface);
+  display: inline-flex; align-items: center; justify-content: center; gap: var(--space-2);
+  min-height: 44px; padding: 0 var(--space-5); border-radius: var(--radius-full); border: 1px solid transparent;
+  background: var(--btn-bg); color: var(--btn-fg); font: var(--label-lg); cursor: pointer; white-space: nowrap;
+  text-decoration: none; transition: background var(--dur-fast) var(--ease-out), box-shadow var(--dur-fast) var(--ease-out),
+    transform var(--dur-fast) var(--ease-out), opacity var(--dur-fast);
+  &:hover:not(:disabled) { box-shadow: var(--elev-1); filter: brightness(1.04); }
+  &:active:not(:disabled) { transform: scale(0.98); }
+  &:disabled { opacity: 0.45; cursor: not-allowed; }
+  .material-symbols-outlined { font-size: 1.125rem; }
+  &.btn-primary:disabled, &.btn-gold:disabled { --btn-bg: var(--surface-container-high); --btn-fg: var(--on-surface-variant); opacity: 1; }
+  &.btn-primary { --btn-bg: var(--primary); --btn-fg: var(--on-primary); &:hover:not(:disabled) { background: var(--primary-container); filter: none; } }
+  &.btn-gold { --btn-bg: var(--secondary-container); --btn-fg: var(--on-secondary-container); font-weight: 650; }
+  &.btn-outline { --btn-bg: transparent; --btn-fg: var(--primary); border-color: var(--outline-variant);
+    &:hover:not(:disabled) { background: var(--surface-container-low); box-shadow: none; } }
+  &.btn-danger { --btn-bg: var(--error); --btn-fg: var(--on-error); }
+  &.btn-danger-outline { --btn-bg: transparent; --btn-fg: var(--error); border-color: color-mix(in srgb, var(--error) 50%, transparent);
+    &:hover:not(:disabled) { background: var(--error-container); box-shadow: none; } }
+  &.btn-success { --btn-bg: #1d7a43; --btn-fg: #fff; }
+  &.btn-text { --btn-bg: transparent; --btn-fg: var(--on-surface-variant); padding-inline: var(--space-3);
+    &:hover:not(:disabled) { background: var(--surface-container); box-shadow: none; color: var(--on-surface); } }
+  &.btn-sm { min-height: 36px; padding-inline: var(--space-4); font: var(--label-md); }
+  &.btn-block { width: 100%; }
+}
+.icon-btn {
+  display: inline-grid; place-items: center; width: 40px; height: 40px; border-radius: var(--radius-full);
+  border: 0; background: transparent; color: var(--on-surface-variant); cursor: pointer;
+  transition: background var(--dur-fast), color var(--dur-fast);
+  &:hover:not(:disabled) { background: var(--surface-container-high); color: var(--on-surface); }
+  &.danger:hover:not(:disabled) { background: var(--error-container); color: var(--error); }
+  &.success:hover:not(:disabled) { background: var(--success-container); color: var(--success); }
+  &:disabled { opacity: 0.45; cursor: not-allowed; }
+}
+
+// ── Formularios ─────────────────────────────────────────────────────────
+.field { display: grid; gap: 6px; }
+.field-label { font: var(--label-md); color: var(--on-surface-variant); }
+.input, .select, .textarea {
+  width: 100%; min-height: 46px; padding: 10px 14px; border-radius: var(--radius-sm);
+  border: 1px solid var(--outline-variant); background: var(--surface-container-lowest); color: var(--on-surface);
+  font: var(--body-lg); transition: border-color var(--dur-fast), box-shadow var(--dur-fast);
+  &::placeholder { color: #6b7280; }
+  &:hover { border-color: var(--outline); }
+  &:focus { outline: none; border-color: var(--surface-tint); box-shadow: var(--focus-ring); }
+  &.invalid { border-color: var(--error); &:focus { box-shadow: 0 0 0 3px rgb(186 26 26 / 25%); } }
+  &:disabled { background: var(--surface-container-low); color: var(--on-surface-variant); }
+}
+.select { appearance: none; padding-right: 40px; cursor: pointer;
+  background: var(--surface-container-lowest) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='%23444955'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E") no-repeat right 12px center; }
+.textarea { min-height: 96px; resize: vertical; }
+.field-error { display: flex; gap: 6px; align-items: center; font: var(--label-md); color: var(--error); }
+.field-hint { font: var(--body-md); color: var(--on-surface-variant); }
+.readonly-value { min-height: 46px; display: flex; align-items: center; gap: 8px; padding: 10px 14px; border-radius: var(--radius-sm);
+  background: var(--surface-container-low); color: var(--on-surface-variant); font: var(--body-lg); }
+.check {
+  display: flex; align-items: flex-start; gap: var(--space-3); cursor: pointer; border-radius: var(--radius-sm);
+  input[type='checkbox'] { flex: none; width: 20px; height: 20px; margin: 1px 0 0; accent-color: var(--primary-container); cursor: pointer; }
+}
+
+// ── Superficies ─────────────────────────────────────────────────────────
+.panel { background: var(--surface-container-lowest); border: 1px solid var(--outline-variant); border-radius: var(--radius-lg); }
+.alert {
+  display: flex; align-items: flex-start; gap: var(--space-3); padding: var(--space-3) var(--space-4); border-radius: var(--radius-md);
+  font: var(--body-md); border: 1px solid transparent;
+  .material-symbols-outlined { font-size: 1.25rem; margin-top: 1px; }
+  .alert-actions { margin-left: auto; display: flex; gap: var(--space-2); align-items: center; }
+  &.alert-error { background: var(--error-container); color: var(--on-error-container); border-color: rgb(186 26 26 / 20%); }
+  &.alert-info { background: var(--primary-fixed); color: var(--on-primary-fixed); }
+  &.alert-warning { background: var(--warning-container); color: #4a2c00; }
+  &.alert-success { background: var(--success-container); color: var(--on-success-container); }
+  button.link { background: none; border: 0; padding: 0; color: inherit; text-decoration: underline; cursor: pointer; font: var(--label-md); }
+}
+.badge {
+  display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: var(--radius-full); font: var(--label-sm);
+  letter-spacing: 0.02em; white-space: nowrap;
+  .dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+  &.st-pendiente { background: var(--secondary-fixed); color: #4d3b00; }
+  &.st-aprobado { background: var(--success-container); color: var(--on-success-container); }
+  &.st-rechazado { background: var(--error-container); color: var(--on-error-container); }
+  &.st-en_revision { background: var(--tertiary-fixed); color: var(--on-tertiary-fixed); }
+  &.st-cancelado { background: var(--surface-container-high); color: var(--on-surface-variant); }
+}
+.chip { display: inline-flex; padding: 4px 12px; border-radius: var(--radius-full); background: var(--primary-fixed); color: var(--on-primary-fixed); font: var(--label-md); }
+.skeleton {
+  border-radius: var(--radius-sm); min-height: 14px;
+  background: linear-gradient(90deg, var(--surface-container) 0, var(--surface-container-high) 40%, var(--surface-container) 80%);
+  background-size: 800px 100%; animation: shimmer 1.4s linear infinite;
+}
+
+// ── Diálogos (<dialog> nativo) ──────────────────────────────────────────
+dialog.dialog {
+  width: min(480px, calc(100vw - 32px)); padding: 0; border: 0; border-radius: var(--radius-lg); color: var(--on-surface);
+  background: var(--surface-container-lowest); box-shadow: var(--elev-3);
+  &::backdrop { background: var(--scrim); backdrop-filter: blur(3px); }
+  &[open] { animation: rise var(--dur-med) var(--ease-out); }
+  .dialog-head { display: flex; align-items: center; gap: var(--space-3); padding: var(--space-5) var(--space-6) 0; }
+  .dialog-body { padding: var(--space-4) var(--space-6); display: grid; gap: var(--space-4); }
+  .dialog-actions { display: flex; justify-content: flex-end; gap: var(--space-3); padding: 0 var(--space-6) var(--space-6); flex-wrap: wrap; }
+}
+
+// ── Interruptor ─────────────────────────────────────────────────────────
+.switch {
+  position: relative; width: 48px; height: 28px; flex: none; border-radius: var(--radius-full); border: 0; cursor: pointer;
+  background: var(--outline-variant); transition: background var(--dur-med) var(--ease-out);
+  &::after { content: ''; position: absolute; top: 4px; left: 4px; width: 20px; height: 20px; border-radius: 50%; background: #fff;
+    box-shadow: 0 1px 3px rgb(0 0 0 / 25%); transition: transform var(--dur-med) var(--ease-out); }
+  &[aria-checked='true'] { background: var(--primary-container); &::after { transform: translateX(20px); } }
+  &:disabled { opacity: 0.55; cursor: progress; }
+}

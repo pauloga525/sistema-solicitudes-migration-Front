@@ -1,0 +1,174 @@
+<app-site-navbar />
+
+@if (closedMsg(); as msg) {
+  <main class="page narrow blocked">
+    <span class="blocked-icon"><span class="material-symbols-outlined" aria-hidden="true">event_busy</span></span>
+    <h1>El envío de solicitudes no está disponible</h1>
+    <p>{{ msg }}</p>
+    <button type="button" class="btn btn-primary" (click)="goHome()">Volver al inicio</button>
+  </main>
+} @else if (aporteActivo() === false) {
+  <main class="page narrow blocked">
+    <span class="blocked-icon"><span class="material-symbols-outlined" aria-hidden="true">event_busy</span></span>
+    <h1>No hay un periodo de aportes activo</h1>
+    <p>Actualmente no hay un periodo de evaluación de mejora habilitado. Vuelve a intentarlo cuando la institución abra el siguiente aporte.</p>
+    <button type="button" class="btn btn-primary" (click)="goHome()">Volver al inicio</button>
+  </main>
+} @else {
+  <main class="page narrow">
+    <button type="button" class="back" (click)="back()">
+      <span class="material-symbols-outlined" aria-hidden="true">arrow_back</span>Volver
+    </button>
+
+    <header class="head center">
+      <h1>Formulario de Solicitud Institucional</h1>
+      <p>Complete la información requerida. Al finalizar podrá revisar los datos antes de enviar.</p>
+    </header>
+
+    <form [formGroup]="form" (ngSubmit)="preview()" novalidate>
+      <!-- 1. Representante -->
+      <fieldset class="section panel">
+        <legend class="section-head">
+          <span class="sicon navy"><span class="material-symbols-outlined" aria-hidden="true">person</span></span>
+          Datos del Representante
+        </legend>
+        <p class="from-profile">Tomamos estos datos de tu perfil. Para cambiarlos ve a <a routerLink="/estudiante/perfil">Mis datos</a>.</p>
+        @if (reps().length > 1) {
+          <div class="field">
+            <label class="field-label" for="repSel">Representante para esta solicitud</label>
+            <select id="repSel" class="select" [value]="selectedRep()" (change)="chooseRep($any($event.target).value)">
+              @for (r of reps(); track r.linkId) { <option [value]="r.linkId">{{ r.names }} ({{ r.relationship }}){{ r.isPrimary ? ' · principal' : '' }}</option> }
+            </select>
+          </div>
+        }
+        <div class="grid">
+          <div class="field span-2">
+            <label class="field-label" for="repName">Nombres y Apellidos</label>
+            <input id="repName" class="input" type="text" autocomplete="name" formControlName="representativeName"
+                   placeholder="Ej: Juan Carlos Pérez López" [class.invalid]="showError('representativeName')"
+                   [attr.aria-invalid]="showError('representativeName')" aria-describedby="repName-err"
+                   (input)="onNameInput('representativeName', $event)" (blur)="onNameBlur('representativeName')" />
+            @if (showError('representativeName')) {
+              <p class="field-error" id="repName-err"><span class="material-symbols-outlined" aria-hidden="true">error</span>Ingrese al menos un nombre y dos apellidos.</p>
+            }
+          </div>
+          <div class="field span-2">
+            <label class="field-label" for="repDni">Cédula de Identidad</label>
+            <input id="repDni" class="input tnum" type="text" inputmode="numeric" maxlength="10" autocomplete="off"
+                   formControlName="representativeDni" placeholder="Ej: 0102030405" [class.invalid]="showError('representativeDni')"
+                   [attr.aria-invalid]="showError('representativeDni')" aria-describedby="repDni-err"
+                   (input)="onDniInput('representativeDni', $event)" (blur)="onBlur('representativeDni')" />
+            @if (showError('representativeDni')) {
+              <p class="field-error" id="repDni-err"><span class="material-symbols-outlined" aria-hidden="true">error</span>Cédula ecuatoriana inválida. Verifica el número.</p>
+            }
+          </div>
+        </div>
+      </fieldset>
+
+      <!-- 2. Estudiante -->
+      <fieldset class="section panel">
+        <legend class="section-head">
+          <span class="sicon gold"><span class="material-symbols-outlined" aria-hidden="true">school</span></span>
+          Datos del Estudiante
+        </legend>
+        <div class="grid">
+          <div class="field span-2">
+            <label class="field-label" for="stName">Nombres y Apellidos del Estudiante</label>
+            <input id="stName" class="input" type="text" autocomplete="off" formControlName="studentName"
+                   placeholder="Ej: María José Pérez López" [class.invalid]="showError('studentName')"
+                   [attr.aria-invalid]="showError('studentName')" aria-describedby="stName-err"
+                   (input)="onNameInput('studentName', $event)" (blur)="onNameBlur('studentName')" />
+            @if (showError('studentName')) {
+              <p class="field-error" id="stName-err"><span class="material-symbols-outlined" aria-hidden="true">error</span>Ingrese al menos un nombre y dos apellidos.</p>
+            }
+          </div>
+          <div class="field span-2">
+            <label class="field-label" for="stDni">Cédula del Estudiante</label>
+            <input id="stDni" class="input tnum" type="text" inputmode="numeric" maxlength="10" autocomplete="off"
+                   formControlName="studentDni" placeholder="Ej: 0102030405" [class.invalid]="showError('studentDni')"
+                   [attr.aria-invalid]="showError('studentDni')" aria-describedby="stDni-err"
+                   (input)="onDniInput('studentDni', $event)" (blur)="onBlur('studentDni')" />
+            @if (showError('studentDni')) {
+              <p class="field-error" id="stDni-err"><span class="material-symbols-outlined" aria-hidden="true">error</span>Cédula ecuatoriana inválida. Verifica el número.</p>
+            }
+          </div>
+          <div class="field">
+            <label class="field-label" for="course">Curso</label>
+            <select id="course" class="select" formControlName="course">
+              <option value="">Seleccionar...</option>
+              @for (c of activeCourses(); track c) { <option [value]="c">{{ courseLabels[c] ?? c }}</option> }
+            </select>
+          </div>
+          <div class="field">
+            <label class="field-label" for="paralelo">Paralelo</label>
+            <select id="paralelo" class="select" formControlName="paralelo">
+              <option value="">Seleccionar...</option>
+              @for (p of paralelos; track p) { <option [value]="p">{{ p }}</option> }
+            </select>
+          </div>
+          @if (campusName()) {
+            <div class="field span-2">
+              <span class="field-label">Campus (asignado automáticamente)</span>
+              <div class="readonly-value"><span class="material-symbols-outlined" aria-hidden="true">apartment</span>{{ campusName() }}</div>
+            </div>
+          }
+        </div>
+      </fieldset>
+
+      <!-- 3. Solicitud -->
+      <fieldset class="section panel">
+        <legend class="section-head">
+          <span class="sicon ink"><span class="material-symbols-outlined" aria-hidden="true">assignment</span></span>
+          Datos de la Solicitud
+        </legend>
+
+        <div class="alert alert-info notice">
+          <span class="material-symbols-outlined" aria-hidden="true">info</span>
+          <div><p class="notice-title">Evaluación de Mejora</p>
+            <p>El proceso de evaluación de MEJORA es totalmente <strong>VOLUNTARIO</strong>.</p></div>
+        </div>
+
+        <div class="subjects-head">
+          <p class="subjects-title" id="subjects-label">Asignaturas para Mejora:</p>
+          @if (cupoInfo(); as c) {
+            <p class="cupo tnum" [class.over]="cupoExcedido()" aria-live="polite">
+              Cupo de este aporte: {{ c.consumido }} de {{ c.limite }} materias ya solicitadas — quedan {{ c.disponible }} disponibles.@if (cupoExcedido()) { Las materias seleccionadas superan el cupo disponible.}
+            </p>
+          }
+        </div>
+
+        @if (activeSubjects(); as list) {
+          @if (list.length) {
+            <p class="subjects-hint">Se muestran solo las materias que cursas en {{ courseName() }}.</p>
+            <div class="subjects" role="group" aria-labelledby="subjects-label">
+              @for (s of list; track s) {
+                <label class="check subject" [class.on]="isChecked(s)">
+                  <input type="checkbox" [checked]="isChecked(s)" (change)="toggleSubject(s)" />
+                  <span>{{ s }}</span>
+                </label>
+              }
+            </div>
+          } @else {
+            <p class="alert alert-info subjects-empty" role="status">No hay materias disponibles para tu curso en este momento. Consulta con la institución.</p>
+          }
+        } @else {
+          <p class="subjects-hint" role="status">Cargando tus materias…</p>
+        }
+
+        <label class="check terms">
+          <input type="checkbox" formControlName="termsAccepted" />
+          <span>Acepto que la información proporcionada es verdadera y que mi representado se preparará adecuadamente para rendir las evaluaciones seleccionadas.</span>
+        </label>
+      </fieldset>
+
+      <div class="form-actions">
+        <button type="button" class="btn btn-outline" (click)="resetForm()">Limpiar formulario</button>
+        <button type="submit" class="btn btn-primary" [disabled]="!isFormValid()">
+          Vista previa y enviar <span class="material-symbols-outlined" aria-hidden="true">send</span>
+        </button>
+      </div>
+    </form>
+  </main>
+}
+
+<app-form-footer />

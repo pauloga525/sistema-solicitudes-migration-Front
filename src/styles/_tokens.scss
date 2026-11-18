@@ -1,0 +1,90 @@
+// ════════════════════════════════════════════════════════════════════
+// Tokens de diseño UETS — equivalentes Material Design 3
+// Fuente: frontend-publico/src/index.css (sistema original) + paleta del
+// escudo institucional. Un único sistema para el sitio público y el panel.
+// ════════════════════════════════════════════════════════════════════
+:root {
+  // Primario — azul marino institucional
+  --primary: #002753;
+  --on-primary: #ffffff;
+  --primary-container: #003d7a;
+  --on-primary-container: #cfe0ff;
+  --primary-fixed: #d6e3ff;
+  --primary-fixed-dim: #a8c8ff;
+  --on-primary-fixed: #001b3d;
+  --surface-tint: #335f9d;
+
+  // Secundario — dorado del escudo
+  --secondary: #755b00;
+  --on-secondary: #ffffff;
+  --secondary-container: #fccc38;
+  --on-secondary-container: #2a2000;
+  --secondary-fixed: #ffdf90;
+
+  // Terciario — azul profundo (barras, pie)
+  --tertiary: #0e2a42;
+  --on-tertiary: #ffffff;
+  --tertiary-container: #264059;
+  --tertiary-fixed: #d0e4ff;
+  --on-tertiary-fixed: #0e2a42;
+
+  // Estados
+  --error: #ba1a1a;
+  --on-error: #ffffff;
+  --error-container: #ffdad6;
+  --on-error-container: #93000a;
+  --success: #1b6d3a;
+  --success-container: #d2f1da;
+  --on-success-container: #0b3d1d;
+  --warning: #8a5300;
+  --warning-container: #ffe3b8;
+
+  // Superficies (neutros con tinte azul)
+  --background: #f6f7f9;
+  --on-background: #161b22;
+  --surface: #fbfcfd;
+  --surface-container-lowest: #ffffff;
+  --surface-container-low: #f2f4f7;
+  --surface-container: #eceff3;
+  --surface-container-high: #e5e8ed;
+  --surface-container-highest: #dde1e7;
+  --surface-variant: #e1e3e8;
+  --on-surface: #161b22;
+  --on-surface-variant: #444955;
+  --outline: #6f7480;
+  --outline-variant: #c6cad3;
+  --inverse-surface: #0e1a2b;
+  --inverse-on-surface: #eef1f6;
+  --scrim: rgb(8 16 32 / 48%);
+
+  // Tipografía (escala ~1.2, rem fijos en la interfaz)
+  --font-sans: 'Inter Variable', 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --display-lg: 700 3.25rem/1.08 var(--font-sans);
+  --display-md: 700 2.5rem/1.12 var(--font-sans);
+  --headline-lg: 650 2rem/1.2 var(--font-sans);
+  --headline-md: 650 1.625rem/1.25 var(--font-sans);
+  --title-lg: 600 1.25rem/1.35 var(--font-sans);
+  --title-md: 600 1rem/1.45 var(--font-sans);
+  --body-lg: 400 1rem/1.6 var(--font-sans);
+  --body-md: 400 0.875rem/1.5 var(--font-sans);
+  --label-lg: 550 0.875rem/1.3 var(--font-sans);
+  --label-md: 550 0.8125rem/1.3 var(--font-sans);
+  --label-sm: 600 0.6875rem/1.3 var(--font-sans);
+
+  // Espaciado (base 4)
+  --space-1: 4px; --space-2: 8px; --space-3: 12px; --space-4: 16px; --space-5: 20px;
+  --space-6: 24px; --space-8: 32px; --space-10: 40px; --space-12: 48px; --space-16: 64px;
+  --gutter: 24px;
+  --container: 1200px;
+
+  // Formas y elevación (sombras con desplazamiento y desenfoque)
+  --radius-sm: 8px; --radius-md: 12px; --radius-lg: 16px; --radius-xl: 24px; --radius-full: 999px;
+  --elev-1: 0 1px 2px rgb(0 27 61 / 6%), 0 1px 3px rgb(0 27 61 / 8%);
+  --elev-2: 0 2px 6px rgb(0 27 61 / 8%), 0 8px 24px rgb(0 27 61 / 8%);
+  --elev-3: 0 12px 40px rgb(0 27 61 / 18%);
+  --focus-ring: 0 0 0 3px rgb(51 95 157 / 45%);
+
+  // Movimiento
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --dur-fast: 150ms; --dur-med: 220ms; --dur-slow: 420ms;
+}

@@ -1,0 +1,82 @@
+<app-site-navbar [showCta]="true" (start)="start()" />
+
+<main>
+  <section class="hero" aria-labelledby="hero-title">
+    <div class="glow" aria-hidden="true"></div>
+    <div class="container hero-grid">
+      <div class="hero-copy">
+        <h1 id="hero-title">Sistema de Solicitudes Académicas</h1>
+        <p class="lead">
+          Realice sus trámites académicos de forma rápida, segura y en línea. Centralizamos todos los
+          procesos para facilitar su gestión estudiantil.
+        </p>
+        <div class="hero-actions">
+          <button type="button" class="btn btn-gold cta" (click)="start()">
+            <span class="material-symbols-outlined" aria-hidden="true">add_circle</span>
+            Iniciar Solicitud
+          </button>
+          <span class="official"><span class="material-symbols-outlined filled" aria-hidden="true">verified</span>Plataforma oficial académica de la UETS</span>
+        </div>
+      </div>
+
+      <figure class="carousel" (mouseenter)="pause(true)" (mouseleave)="pause(false)" (focusin)="pause(true)" (focusout)="pause(false)">
+        @for (s of slides; track $index; let i = $index) {
+          <img [src]="s.src" [alt]="s.label" [class.on]="i === current()" [attr.aria-hidden]="i !== current()"
+               width="1600" height="900" [attr.loading]="i === 0 ? 'eager' : 'lazy'" [attr.fetchpriority]="i === 0 ? 'high' : null" />
+        }
+        <figcaption>
+          <span class="cap" aria-live="polite">{{ slides[current()].label }}</span>
+          <span class="dots">
+            @for (s of slides; track $index; let i = $index) {
+              <button type="button" [class.on]="i === current()" (click)="current.set(i)" [attr.aria-label]="'Ir a imagen ' + (i + 1)"></button>
+            }
+          </span>
+        </figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <section class="how" aria-labelledby="how-title">
+    <div class="container">
+      <h2 id="how-title" class="section-title">¿Cómo funciona el proceso?</h2>
+      <ol class="steps">
+        @for (s of steps; track s.label; let i = $index; let last = $last) {
+          <li class="step" [class.accent]="last">
+            <span class="step-icon"><span class="material-symbols-outlined" aria-hidden="true">{{ s.icon }}</span></span>
+            <p class="step-label"><span class="n">{{ i + 1 }}.</span> {{ s.label }}</p>
+            <p class="step-text">{{ s.text }}</p>
+          </li>
+        }
+      </ol>
+    </div>
+  </section>
+
+  <section class="info" aria-label="Información y trámites">
+    <div class="container info-grid">
+      <aside class="important">
+        <h2><span class="material-symbols-outlined" aria-hidden="true">task_alt</span>Información Importante</h2>
+        <ul>
+          @for (i of info; track i.title) {
+            <li>
+              <span class="material-symbols-outlined" aria-hidden="true">check_circle</span>
+              <div><p class="t">{{ i.title }}</p><p class="d">{{ i.text }}</p></div>
+            </li>
+          }
+        </ul>
+      </aside>
+      <div class="types">
+        <h2 class="section-title left">Tipos de Trámites Disponibles</h2>
+        <ul class="type-list">
+          @for (t of tramites; track t.label) {
+            <li>
+              <span class="ticon"><span class="material-symbols-outlined" aria-hidden="true">{{ t.icon }}</span></span>
+              <div><p class="t">{{ t.label }}</p><p class="d">{{ t.text }}</p></div>
+            </li>
+          }
+        </ul>
+      </div>
+    </div>
+  </section>
+</main>
+
+<app-site-footer />
