@@ -1,0 +1,80 @@
+name: CI/CD - HostGator (academico.uets.edu.ec)
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+# Evita dos despliegues a la vez sobre la misma carpeta
+concurrency:
+  group: deploy-hostgator-academico
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Build y tests (CI)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Instalar dependencias
+        run: npm ci
+
+      - name: Tests unitarios
+        run: npm test
+
+      - name: Compilar producción
+        run: npm run build
+
+      # Si existe la variable del repo API_URL, se usa como URL del backend.
+      # Si no, se mantiene /api (mismo origen) del public/env.js.
+      - name: Configurar URL del backend (env.js)
+        if: ${{ vars.API_URL != '' }}
+        env:
+          API_URL: ${{ vars.API_URL }}
+        run: |
+          cat > dist/frontend/browser/env.js <<EOF
+          window.__env = window.__env || {};
+          window.__env.apiUrl = '${API_URL}';
+          EOF
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/frontend/browser/
+          include-hidden-files: true
+          retention-days: 7
+
+  deploy:
+    name: Deploy a HostGator (CD)
+    needs: build
+    # Solo despliega con push a main (o lanzado a mano), nunca desde un PR
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
+
+      - name: Subir por FTP a academico.uets.edu.ec
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        with:
+          server: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          # FTPS falla en el canal de datos de HostGator (tlsv1 alert decode error)
+          protocol: ftp
+          port: 21
+          local-dir: ./dist/
+          # La cuenta FTP entra directamente en
+          # /home1/uets/public_html/website_65435d28 (academico.uets.edu.ec)
+          server-dir: ./
