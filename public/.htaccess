@@ -1,0 +1,17 @@
+# Angular: redirige rutas internas a index.html (Apache / HostGator)
+# academico.uets.edu.ec apunta a public_html/website_65435d28 (raíz del subdominio)
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteBase /
+  RewriteCond %{REQUEST_FILENAME} -f [OR]
+  RewriteCond %{REQUEST_FILENAME} -d
+  RewriteRule ^ - [L]
+  RewriteRule ^ index.html [L]
+</IfModule>
+
+# index.html y env.js sin caché para que siempre se vea la última versión
+<IfModule mod_headers.c>
+  <FilesMatch "^(index\.html|env\.js)$">
+    Header set Cache-Control "no-cache, no-store, must-revalidate"
+  </FilesMatch>
+</IfModule>
