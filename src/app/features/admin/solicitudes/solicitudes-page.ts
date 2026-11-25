@@ -1,3 +1,4 @@
+import { EvalChips } from '../../../shared/ui/eval-chips';
 import { DatePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, DestroyRef, ElementRef, computed, inject, signal, viewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
@@ -29,7 +30,7 @@ export function getAcciones(status: string, requestType: string): Accion[] {
 
 @Component({
   selector: 'app-solicitudes-page',
-  imports: [AdminLayout, FormsModule, DatePipe, RouterLink, Pager, EmptyState, SkeletonRows],
+  imports: [AdminLayout, FormsModule, DatePipe, RouterLink, Pager, EmptyState, SkeletonRows, EvalChips],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './solicitudes-page.html',
   styleUrl: './solicitudes-page.scss',

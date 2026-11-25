@@ -7,7 +7,7 @@ import { ConfirmService } from '../../../shared/ui/confirm.service';
 import { fmtDateTime } from '../../../shared/ui/format';
 import { SkeletonRows } from '../../../shared/ui/states';
 import { ToastService } from '../../../shared/ui/toast.service';
-import { SaApi } from '../sa-api.service';
+import { MailStatus, SaApi } from '../sa-api.service';
 
 @Component({
   selector: 'app-sa-settings',
@@ -58,11 +58,44 @@ import { SaApi } from '../sa-api.service';
           </form>
         </section>
       </div>
+
+      <section class="section mail" aria-labelledby="h-mail">
+        <header><span class="material-symbols-outlined hicon" aria-hidden="true">mail</span><h2 id="h-mail">Correo saliente</h2>
+          @if (mail(); as m) { <span class="end"><span class="tag" [class]="'tag ' + (m.config.enabled ? 'ok' : 'warn')">{{ m.config.enabled ? 'Configurado' : 'Sin configurar' }}</span></span> }</header>
+        <div class="body stack">
+          @if (mail(); as m) {
+            <dl class="kv">
+              <dt>Servidor</dt><dd>{{ m.config.host || '—' }}@if (m.config.host) { : {{ m.config.port }} ({{ m.config.mode }}) }</dd>
+              <dt>Cuenta</dt><dd>{{ m.config.user || '—' }} · clave {{ m.config.passwordSet ? 'cargada' : 'no cargada' }}</dd>
+              <dt>Remitente</dt><dd>@if (m.config.from) { {{ m.config.fromName }} &lt;{{ m.config.from }}&gt; } @else { — }</dd>
+              @if (m.config.replyTo) { <dt>Responder a</dt><dd>{{ m.config.replyTo }}</dd> }
+              <dt>Correos</dt><dd>{{ m.counts['enviado'] ?? 0 }} enviados · {{ m.counts['fallido'] ?? 0 }} fallidos · {{ m.counts['sin_configurar'] ?? 0 }} sin enviar (antes de configurar)</dd>
+            </dl>
+            <p class="field-hint">Estos datos salen del archivo .env del backend (MAIL_SMTP_*). Para cambiarlos, edita ese archivo y reinicia el backend.</p>
+            <form class="test" (submit)="$event.preventDefault(); sendTest()">
+              <label class="field grow"><span class="field-label">Enviar un correo de prueba a</span>
+                <input class="input" type="email" name="to" [(ngModel)]="testTo" placeholder="tu.correo@uets.edu.ec" /></label>
+              <button type="submit" class="btn btn-primary" [disabled]="busy() || !testTo">{{ busy() ? 'Enviando…' : 'Enviar prueba' }}</button>
+            </form>
+            @if (testResult(); as t) {
+              @if (t.ok) { <p class="alert alert-success"><span class="material-symbols-outlined" aria-hidden="true">check_circle</span>Correo enviado. Revisa la bandeja de entrada (y spam) de {{ testTo }}.</p> }
+              @else { <p class="alert alert-error" role="alert"><span class="material-symbols-outlined" aria-hidden="true">error</span><span><strong>No se pudo enviar.</strong> {{ t.hint }} <small class="muted">({{ t.error }})</small></span></p> }
+            }
+            @if ((m.counts['fallido'] ?? 0) + (m.counts['sin_configurar'] ?? 0) > 0 && m.config.enabled) {
+              <div><button type="button" class="btn btn-outline btn-sm" [disabled]="busy()" (click)="retry()">
+                <span class="material-symbols-outlined" aria-hidden="true">refresh</span>Reintentar los {{ (m.counts['fallido'] ?? 0) + (m.counts['sin_configurar'] ?? 0) }} correos no enviados</button></div>
+            }
+          } @else { <app-skeleton-rows [rows]="3" [cols]="2" /> }
+        </div>
+      </section>
     } @else { <app-skeleton-rows [rows]="6" [cols]="2" /> }
   `,
   styles: `
     .stack { display: grid; gap: 12px; } .row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
     .section.on { border-color: #e0a100; box-shadow: 0 0 0 1px #e0a100 inset; }
+    .mail { margin-top: 16px; } .hicon { color: var(--on-surface-variant); font-size: 20px; }
+    .section header .end { margin-left: auto; }
+    .test { display: flex; gap: 10px; align-items: flex-end; flex-wrap: wrap; } .test .grow { flex: 1 1 260px; }
     h3 { font: var(--title-md); margin-top: 4px; } .small { margin-left: 8px; font: var(--label-md); }
   `,
 })
@@ -77,7 +110,25 @@ export class SettingsPage {
   msg = '';
   p: { dueDaysDefault: number | null; userAuditRetentionDays: number; errorRetentionDays: number } = { dueDaysDefault: null, userAuditRetentionDays: 730, errorRetentionDays: 180 };
 
-  constructor() { void this.load(); }
+  readonly mail = signal<MailStatus | null>(null);
+  readonly testResult = signal<{ ok: boolean; error?: string; hint?: string } | null>(null);
+  testTo = '';
+
+  constructor() { void this.load(); void this.loadMail(); }
+  async loadMail() { try { this.mail.set(await this.api.mailStatus()); } catch { /* sin permiso o sin red: la sección queda vacía */ } }
+  async sendTest() {
+    this.busy.set(true); this.testResult.set(null);
+    try { this.testResult.set(await this.api.mailTest(this.testTo.trim())); void this.loadMail(); }
+    catch (e) { this.toast.error(apiMessage(e)); } finally { this.busy.set(false); }
+  }
+  async retry() {
+    this.busy.set(true);
+    try {
+      const r = await this.api.mailRetry();
+      this.toast.ok(`${r.retried} correos enviados de nuevo a la cola`);
+      setTimeout(() => void this.loadMail(), 4000);
+    } catch (e) { this.toast.error(apiMessage(e)); } finally { this.busy.set(false); }
+  }
   private apply(x: any) {
     this.s.set(x);
     this.msg = x.maintenance.message ?? '';

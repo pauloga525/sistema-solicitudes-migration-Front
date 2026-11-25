@@ -1,4 +1,4 @@
-<app-admin-layout title="Bandeja de solicitudes" lede="Evaluaciones de Mejora recibidas. Al abrir una en revisión queda aprobada (regla del trámite)."
+<app-admin-layout title="Bandeja de solicitudes" lede="Evaluaciones de Mejora recibidas. Abrir una solicitud solo la muestra: apruébala o niégala con los botones."
                   [searchable]="true" [searchValue]="searchInput()" (searchChange)="onSearch($event)">
   <button layoutActions type="button" class="btn btn-primary" (click)="exportExcel()" [disabled]="!canExport() || result().total === 0 || exporting()"
           [attr.title]="exportTitle()" [attr.aria-describedby]="canExport() ? null : 'export-hint'">
@@ -71,7 +71,7 @@
           <thead>
             <tr>
               <th scope="col">N° Solicitud</th><th scope="col">Estudiante</th><th scope="col">Curso</th>
-              <th scope="col">Materias</th><th scope="col">Estado</th><th scope="col" class="num">Fecha</th>
+              <th scope="col">Materias y evaluación</th><th scope="col">Estado</th><th scope="col" class="num">Fecha</th>
               <th scope="col" class="num"><span class="sr-only">Acciones</span></th>
             </tr>
           </thead>
@@ -81,7 +81,7 @@
                 <td class="mono"><a class="cell-link" [routerLink]="['/admin/solicitudes', s._id]" (click)="$event.stopPropagation()">{{ s.requestNumber ?? s._id.slice(-6) }}</a></td>
                 <td><span class="strong">{{ s.studentName }}</span><span class="sub">{{ s.representativeName }}</span></td>
                 <td class="nowrap" [attr.title]="'Campus ' + humanize(s.campus)">{{ courseLabels[s.course] ?? humanize(s.course) }} {{ s.paralelo }}</td>
-                <td class="subj opt">{{ (s.payload.subjects ?? []).join(', ') }}</td>
+                <td class="subj opt"><app-eval-chips [items]="$any(s).evaluations" [fallback]="s.payload.subjects" /></td>
                 <td><span class="key" [class]="'key k-' + s.status"><span class="sq" aria-hidden="true"></span>{{ estadoLabels[s.status] ?? s.status }}</span></td>
                 <td class="num mono muted opt">{{ s.createdAt | date: 'dd MMM y' }}</td>
                 <td class="num">

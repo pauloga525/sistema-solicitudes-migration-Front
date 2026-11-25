@@ -24,3 +24,15 @@ export function printBlob(blob: Blob): void {
     a.click();
   }
 }
+
+/** Abre el PDF en una pestaña nueva para verlo. */
+export function viewBlob(blob: Blob): void {
+  const url = URL.createObjectURL(new Blob([blob], { type: 'application/pdf' }));
+  if (!window.open(url, '_blank')) {
+    const a = document.createElement('a');
+    a.href = url;
+    a.target = '_blank';
+    a.click();
+  }
+  setTimeout(() => URL.revokeObjectURL(url), 60_000);
+}

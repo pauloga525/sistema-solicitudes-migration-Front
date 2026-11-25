@@ -1,12 +1,13 @@
 import { DatePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, ElementRef, computed, effect, inject, input, signal, viewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { REQUEST_STATUS, humanize } from '../../../core/catalogs';
 import { SolicitudRequest } from '../../../core/models/models';
 import { AdminApiService } from '../../../core/services/admin-api.service';
 import { getErrorMessage } from '../../../core/utils/errors';
 import { downloadBlob, printBlob } from '../../../core/utils/pdf';
+import { ExpedienteView } from '../seguimiento/expediente';
 import { AdminLayout } from '../shell/admin-layout';
 
 const ESTADO_CONFIG: Record<string, { label: string }> = {
@@ -16,7 +17,7 @@ const ESTADO_CONFIG: Record<string, { label: string }> = {
 
 @Component({
   selector: 'app-detalle-page',
-  imports: [AdminLayout, DatePipe, FormsModule, RouterLink],
+  imports: [AdminLayout, DatePipe, FormsModule, RouterLink, ExpedienteView],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './detalle-page.html',
   styleUrl: './detalle-page.scss',
@@ -37,6 +38,15 @@ export class DetallePage {
   readonly printLoading = signal(false);
   denyReason = '';
   readonly denyOpen = signal(false);
+  readonly version = signal(0);
+  private readonly route = inject(ActivatedRoute);
+  private scrolled = false;
+  /** Desde "Seguimiento de evaluaciones" se llega con #seguimiento: baja al expediente cuando termina de cargar. */
+  onExpLoaded() {
+    if (this.scrolled || this.route.snapshot.fragment !== 'seguimiento') return;
+    this.scrolled = true;
+    setTimeout(() => document.getElementById('seguimiento')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
+  }
   private readonly denyDialog = viewChild<ElementRef<HTMLDialogElement>>('deny');
 
   readonly status = computed(() => this.solicitud()?.status ?? 'pendiente');
@@ -50,7 +60,7 @@ export class DetallePage {
       const id = this.id();
       this.loading.set(true);
       this.error.set(null);
-      // GET /requests/:id — el backend auto-aprueba proceso_mejora en revisión (decisión de negocio).
+      // GET /requests/:id — solo lectura: abrir el detalle ya no aprueba la solicitud (se aprueba o se niega a mano).
       this.api.getRequestById(id).then(
         (s) => { this.solicitud.set(s); this.loadHistory(); },
         (err) => this.error.set(getErrorMessage(err)),
@@ -68,6 +78,7 @@ export class DetallePage {
     try {
       this.solicitud.set(await this.api.updateRequestStatus(this.id(), status, reason));
       this.loadHistory();
+      this.version.update((v) => v + 1);
       return true;
     } catch (err) {
       this.actionError.set(getErrorMessage(err));

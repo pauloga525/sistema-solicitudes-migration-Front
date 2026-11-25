@@ -16,8 +16,8 @@ import { Dict, Page, SaApi, UserRow } from '../sa-api.service';
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="page-head">
-      <div><h1>Usuarios</h1><p class="lede">Estudiantes, administradores y super administradores. Desactivar solo impide el ingreso; eliminar borra la cuenta definitivamente.</p></div>
-      <div class="actions"><button type="button" class="btn btn-primary" (click)="openCreate()"><span class="material-symbols-outlined" aria-hidden="true">person_add</span>Nuevo usuario</button></div>
+      <div><h1>Administradores</h1><p class="lede">Cuentas de administración (vicerrectorado, secretaría) y de super administración. Los estudiantes, docentes y representantes tienen su propia sección. Desactivar solo impide el ingreso; eliminar borra la cuenta definitivamente.</p></div>
+      <div class="actions"><button type="button" class="btn btn-primary" (click)="openCreate()"><span class="material-symbols-outlined" aria-hidden="true">person_add</span>Nuevo administrador</button></div>
     </div>
 
     <form class="filters" (submit)="$event.preventDefault(); search()" role="search">
@@ -25,7 +25,7 @@ import { Dict, Page, SaApi, UserRow } from '../sa-api.service';
         <input class="input" type="search" name="q" [(ngModel)]="q" placeholder="Nombre, correo o usuario" /></label>
       <label class="field"><span class="field-label">Rol</span>
         <select class="select" name="role" [(ngModel)]="role" (ngModelChange)="search()">
-          <option value="">Todos</option><option value="STUDENT">Estudiante</option><option value="ADMIN">Administrador</option><option value="SUPERADMIN">Super administrador</option>
+          <option value="">Todos</option><option value="ADMIN">Administrador</option><option value="SUPERADMIN">Super administrador</option>
         </select></label>
       <label class="field"><span class="field-label">Estado</span>
         <select class="select" name="status" [(ngModel)]="status" (ngModelChange)="search()">
@@ -61,13 +61,13 @@ import { Dict, Page, SaApi, UserRow } from '../sa-api.service';
         </div>
         <app-pager [page]="page()!.page" [pageSize]="page()!.pageSize" [total]="page()!.total" [totalPages]="page()!.totalPages" (go)="go($event)" />
       } @else if (!loading()) {
-        <app-empty icon="person_search" title="No hay usuarios con esos filtros" text="Cambia el rol, el estado o el texto de búsqueda." />
+        <app-empty icon="person_search" title="No hay administradores con esos filtros" text="Cambia el rol, el estado o el texto de búsqueda." />
       }
     </div>
 
     <!-- Alta -->
     <dialog #createDlg class="sheet" aria-labelledby="cu-title" (close)="createOpen.set(false)">
-      <div class="sheet-head"><h2 id="cu-title">Nuevo usuario</h2>
+      <div class="sheet-head"><h2 id="cu-title">Nueva cuenta</h2>
         <button type="button" class="icon-btn" (click)="createDlg.close()" aria-label="Cerrar"><span class="material-symbols-outlined">close</span></button></div>
       <div class="sheet-body">
         @if (created(); as c) {
@@ -93,7 +93,7 @@ import { Dict, Page, SaApi, UserRow } from '../sa-api.service';
               @if (nu.cedula.length === 10 && !cedOk(nu.cedula)) { <span class="field-error">La cédula no es válida.</span> }</label>
             <label class="field"><span class="field-label">Rol</span>
               <select class="select" name="role" [(ngModel)]="nu.role">
-                <option value="ADMIN">Administrador</option><option value="SUPERADMIN">Super administrador</option><option value="STUDENT">Estudiante</option>
+                <option value="ADMIN">Administrador</option><option value="SUPERADMIN">Super administrador</option><option value="TEACHER">Docente (aparecerá en Docentes)</option><option value="STUDENT">Estudiante (aparecerá en Estudiantes)</option>
               </select>
               @if (nu.role === 'SUPERADMIN') { <span class="field-hint">Tendrá control total del sistema. Quedará registrado como escalamiento de privilegios.</span> }</label>
             @if (formError()) { <p class="alert alert-error" role="alert">{{ formError() }}</p> }
@@ -134,7 +134,8 @@ import { Dict, Page, SaApi, UserRow } from '../sa-api.service';
               <h3>Rol</h3>
               <div class="row">
                 <select class="select" [(ngModel)]="newRole" aria-label="Nuevo rol">
-                  <option value="STUDENT">Estudiante</option><option value="ADMIN">Administrador</option><option value="SUPERADMIN">Super administrador</option>
+                  <option value="TEACHER">Docente</option><option value="ADMIN">Administrador</option><option value="SUPERADMIN">Super administrador</option>
+                  @if (u.role === 'STUDENT') { <option value="STUDENT">Estudiante</option> }
                 </select>
                 <button type="button" class="btn btn-outline" [disabled]="newRole === u.role || busy()" (click)="changeRole(u)">Cambiar rol</button>
               </div>
@@ -255,7 +256,7 @@ export class UsersPage {
     this.loading.set(true);
     this.error.set(null);
     try {
-      this.page.set(await this.api.users({ q: this.q.trim(), role: this.role, status: this.status, page: this.pageNo() }));
+      this.page.set(await this.api.users({ q: this.q.trim(), role: this.role || 'staff', status: this.status, page: this.pageNo() }));
     } catch (e) {
       this.error.set(apiMessage(e, 'No pudimos cargar los usuarios.'));
     } finally {
@@ -336,10 +337,12 @@ export class UsersPage {
       title: `Cambiar rol a ${ROLE_LABELS[this.newRole]}`, confirmLabel: 'Cambiar rol', reasonMin: 10,
       risk: up ? 'Le das control total del sistema. Se registra como escalamiento de privilegios y sus sesiones se cierran.'
         : u.role === 'SUPERADMIN' ? 'Pierde el acceso al panel de super administración. Sus sesiones abiertas se cierran.'
+        : this.newRole === 'TEACHER' ? 'Entrará al panel docente y saldrá de esta lista: la verás en Docentes, donde puedes asignarle materias. Sus sesiones abiertas se cierran.'
         : 'Cambia lo que puede ver y hacer. Sus sesiones abiertas se cierran.',
     });
     if (reason === null) return;
-    await this.act(() => this.api.changeRole(u.id, this.newRole, reason), 'Rol actualizado');
+    const toTeacher = this.newRole === 'TEACHER';
+    await this.act(() => this.api.changeRole(u.id, this.newRole, reason), toTeacher ? 'Ahora es docente: asígnale materias en Docentes' : 'Rol actualizado');
   }
 
   async deactivate(u: UserRow) {

@@ -244,14 +244,34 @@ await step('Bandeja: franja de estados, filtros y exportación a Excel', async (
   await p.getByRole('button', { name: 'Limpiar búsqueda' }).click();
 });
 
-await step('Detalle: auto-aprobación al abrir y PDF', async () => {
+await step('Detalle: abrir solo visualiza; aprobar a mano; expediente de seguimiento; PDF', async () => {
   const p = ad.page;
   await p.getByRole('cell', { name: requestNumber }).click();
   await p.waitForURL('**/admin/solicitudes/**');
+  await p.getByText('Esta solicitud espera tu decisión.').waitFor();
+  await p.getByText('En revisión').first().waitFor();
+  await p.getByRole('heading', { name: 'Seguimiento de la evaluación' }).waitFor();
+  await p.getByRole('heading', { name: 'Línea de tiempo y constancia de avisos' }).waitFor();
+  await p.getByRole('button', { name: 'Aprobar' }).click();
   await p.getByText('Aprobado').first().waitFor();
   await shot(p, '06-detalle');
   const [dl] = await Promise.all([p.waitForEvent('download'), p.getByRole('button', { name: /Descargar PDF/ }).click()]);
   assert.equal(dl.suggestedFilename(), `solicitud-${requestNumber}.pdf`);
+});
+
+await step('Seguimiento de evaluaciones: filtros, estado por materia y expediente', async () => {
+  const p = ad.page;
+  await p.getByRole('link', { name: 'Seguimiento de evaluaciones' }).click();
+  await p.getByRole('heading', { name: 'Seguimiento de evaluaciones' }).waitFor();
+  await p.getByLabel('Estudiante o número').fill(requestNumber);
+  await p.getByRole('button', { name: 'Buscar' }).click();
+  await p.getByText(requestNumber).first().waitFor();
+  await shot(p, '06b-seguimiento');
+  const [csv] = await Promise.all([p.waitForEvent('download'), p.getByRole('button', { name: /Exportar CSV/ }).click()]);
+  assert.match(csv.suggestedFilename(), /^seguimiento-evaluaciones-.*\.csv$/);
+  await p.getByRole('link', { name: 'Ver expediente' }).first().click();
+  await p.waitForURL('**/admin/solicitudes/**#seguimiento');
+  await p.getByRole('heading', { name: 'Evaluación por materia' }).waitFor();
 });
 
 await step('Cursos y materias: activar/desactivar y restaurar', async () => {
@@ -278,6 +298,28 @@ await step('Cursos y materias: activar/desactivar y restaurar', async () => {
   await p.waitForFunction(() => ![...document.querySelectorAll('[role=switch]')].some((e) => e.getAttribute('aria-labelledby')?.startsWith('subjects-') && e.getAttribute('aria-checked') === 'false'));
   await p.getByLabel('Curso', { exact: true }).selectOption('5to');
   assert.equal(await p.getByRole('switch', { name: 'Mod. Servomecanismos' }).count(), 0, 'cada curso muestra solo sus materias');
+});
+
+await step('Panel docente (vista previa): aviso de novedades, seguimiento y notificaciones', async () => {
+  const p = ad.page;
+  await p.getByRole('link', { name: 'Panel docente (vista previa)' }).click();
+  await p.getByRole('heading', { name: /Tienes \d+ novedades/ }).waitFor();
+  await p.getByRole('button', { name: 'Ver solicitudes' }).click();
+  await p.waitForURL('**/docente/solicitudes?track=por_atender');
+  await p.getByText('Vista previa con datos de ejemplo.').waitFor();
+  await p.locator('tbody tr').first().click();  // la fila abre la solicitud
+  await p.waitForURL('**/docente/solicitudes/**');
+  await p.getByRole('heading', { name: 'Tu seguimiento' }).waitFor();
+  await p.getByLabel(/Fecha y hora/).fill('2026-12-01T09:00');
+  await p.getByRole('button', { name: /avisar al estudiante$/ }).click();
+  await p.getByText(/Evaluación programada|Cambios guardados/).first().waitFor();
+  await shot(p, '07b-docente');
+  await p.getByRole('link', { name: 'Solicitudes', exact: true }).first().click();
+  await p.getByRole('link', { name: /^Notificaciones/ }).click();
+  await p.getByRole('button', { name: 'Marcar todas como leídas' }).click();
+  await p.waitForFunction(() => !document.querySelector('.nbadge'));  // el contador del riel se vacía
+  await p.getByRole('link', { name: 'Panel del administrador' }).click();
+  await p.waitForURL('**/admin/dashboard');
 });
 
 await step('Activación del sistema: fuera de fechas no se puede enviar', async () => {
@@ -395,14 +437,12 @@ await step('SUPERADMIN: eliminar una cuenta (motivo y correo como confirmación)
   await tmp.ctx.request.get(`${BASE}/api/auth/session`);
   const reg = await api(tmp.ctx, 'POST', '/auth/register', { email, password: PW, confirmPassword: PW });
   assert.equal(reg.status(), 201, await reg.text());
+  const uid = (await reg.json()).user.id;
   await tmp.ctx.close();
   const p = sa.page;
-  await p.goto(`${BASE}/superadmin/usuarios`);
-  await p.getByPlaceholder('Nombre, correo o usuario').fill(email);
-  await p.getByPlaceholder('Nombre, correo o usuario').press('Enter');
-  await p.getByText(email).first().waitFor();
-  await p.getByRole('button', { name: '(sin nombre)' }).first().click();
-  await p.getByRole('heading', { name: 'Eliminar cuenta' }).waitFor();
+  // La pestaña Usuarios ya no existe: la cuenta del estudiante se elimina desde su ficha.
+  await p.goto(`${BASE}/superadmin/estudiantes/${uid}`);
+  await p.getByRole('heading', { name: 'Cuenta' }).waitFor();
   await p.getByRole('button', { name: 'Eliminar cuenta…' }).click();
   const ok = p.getByRole('button', { name: 'Eliminar definitivamente' });
   await p.locator('dialog.confirm textarea').fill('Prueba E2E: cuenta creada por error');
@@ -411,7 +451,7 @@ await step('SUPERADMIN: eliminar una cuenta (motivo y correo como confirmación)
   await shot(p, '12-sa-eliminar');
   await ok.click();
   await p.getByText('Cuenta eliminada').waitFor();
-  await p.getByText('No hay usuarios con esos filtros').waitFor();
+  await p.waitForURL('**/superadmin/estudiantes');
 });
 
 await step('Inicio con sesión abierta: botón Cerrar sesión', async () => {

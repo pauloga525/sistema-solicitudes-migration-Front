@@ -4,7 +4,10 @@ import { SessionService } from '../../../core/auth/session.service';
 import { NavGroup, PanelFrame } from '../../../shared/ui/panel-frame';
 
 const BASE: NavGroup[] = [
-  { label: null, items: [{ to: '/admin/dashboard', label: 'Bandeja de solicitudes', icon: 'inbox' }] },
+  { label: null, items: [
+    { to: '/admin/dashboard', label: 'Bandeja de solicitudes', icon: 'inbox' },
+    { to: '/admin/seguimiento', label: 'Seguimiento de evaluaciones', icon: 'fact_check' },
+  ] },
   { label: 'Configuración del trámite', items: [
     { to: '/admin/activacion', label: 'Activación del sistema', icon: 'event_available' },
     { to: '/admin/editor', label: 'Cursos y materias', icon: 'edit_note' },
@@ -22,7 +25,8 @@ const BASE: NavGroup[] = [
 })
 export class AdminShell {
   private readonly session = inject(SessionService);
-  readonly groups = computed<NavGroup[]>(() => this.session.role() === 'SUPERADMIN'
-    ? [...BASE, { label: 'Otras áreas', items: [{ to: '/superadmin/dashboard', label: 'Super administración', icon: 'shield' }] }]
-    : BASE);
+  readonly groups = computed<NavGroup[]>(() => [...BASE, { label: 'Otras áreas', items: [
+    { to: '/docente', label: 'Panel docente (vista previa)', icon: 'co_present' },
+    ...(this.session.role() === 'SUPERADMIN' ? [{ to: '/superadmin/dashboard', label: 'Super administración', icon: 'shield' }] : []),
+  ] }]);
 }

@@ -4,7 +4,7 @@ import { Router } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { API_URL } from '../config';
 
-export type Role = 'STUDENT' | 'ADMIN' | 'SUPERADMIN';
+export type Role = 'STUDENT' | 'TEACHER' | 'ADMIN' | 'SUPERADMIN';
 
 export interface SessionUser {
   id: string;

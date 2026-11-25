@@ -1,3 +1,4 @@
+import { EvalChips } from '../../../shared/ui/eval-chips';
 import { ChangeDetectionStrategy, Component, ElementRef, inject, input, signal, viewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
@@ -11,7 +12,7 @@ import { Page, Period, ReqRow, SaApi } from '../sa-api.service';
 
 @Component({
   selector: 'app-sa-requests',
-  imports: [FormsModule, RouterLink, Pager, EmptyState, SkeletonRows, StatusKey],
+  imports: [FormsModule, RouterLink, Pager, EmptyState, SkeletonRows, StatusKey, EvalChips],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="page-head">
@@ -57,7 +58,7 @@ import { Page, Period, ReqRow, SaApi } from '../sa-api.service';
       @if (loading() && !page()) { <app-skeleton-rows [cols]="7" /> }
       @else if (page()?.rows?.length) {
         <div class="table-scroll"><table class="dtable">
-          <thead><tr><th>Número</th><th>Estudiante</th><th>Curso</th><th>Materias</th><th>Estado</th><th>Plazo</th><th>Responsable</th><th class="num">Recibida</th></tr></thead>
+          <thead><tr><th>Número</th><th>Estudiante</th><th>Curso</th><th>Materias y evaluación</th><th>Estado</th><th>Plazo</th><th>Responsable</th><th class="num">Recibida</th></tr></thead>
           <tbody>
             @for (r of page()!.rows; track r.id) {
               <tr class="clickable" (click)="open(r)">
@@ -65,7 +66,7 @@ import { Page, Period, ReqRow, SaApi } from '../sa-api.service';
                   @if (r.legacy) { <span class="sub">anterior al registro</span> }</td>
                 <td><span class="strong">{{ r.studentName }}</span><span class="sub">{{ r.representativeName }}</span></td>
                 <td class="nowrap">{{ courseShort[r.course] || r.course }} {{ r.paralelo }}</td>
-                <td class="subj opt">{{ r.subjects.join(', ') }}</td>
+                <td class="subj opt"><app-eval-chips [items]="r.evaluations" [fallback]="r.subjects" /></td>
                 <td><app-status-key [status]="r.status" [label]="labels[r.status]" /></td>
                 <td class="mono">@if (r.dueAt) { <span [class.overdue]="r.overdue">{{ dt(r.dueAt) }}</span> } @else { <span class="muted">—</span> }</td>
                 <td class="opt">{{ r.assignedName ? 'Responsable: ' + r.assignedName : '' }}</td>

@@ -29,7 +29,7 @@ export const STATUS_LABELS: Record<string, string> = {
   pendiente: 'Pendiente', en_revision: 'En revisión', aprobado: 'Aprobado', rechazado: 'Rechazado', cancelado: 'Cancelado',
 };
 export const STATUS_ORDER = ['pendiente', 'en_revision', 'aprobado', 'rechazado', 'cancelado'];
-export const ROLE_LABELS: Record<string, string> = { STUDENT: 'Estudiante', ADMIN: 'Administrador', SUPERADMIN: 'Super Administrador', SYSTEM: 'Sistema' };
+export const ROLE_LABELS: Record<string, string> = { STUDENT: 'Estudiante', TEACHER: 'Docente', ADMIN: 'Administrador', SUPERADMIN: 'Super Administrador', SYSTEM: 'Sistema' };
 
 export function downloadBlob(blob: Blob, name: string): void {
   const url = URL.createObjectURL(blob);

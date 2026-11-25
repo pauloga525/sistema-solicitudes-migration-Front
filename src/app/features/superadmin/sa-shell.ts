@@ -5,10 +5,11 @@ import { NavGroup, PanelFrame } from '../../shared/ui/panel-frame';
 const GROUPS: NavGroup[] = [
   { label: null, items: [{ to: '/superadmin/dashboard', label: 'Resumen', icon: 'monitoring' }] },
   { label: 'Personas', items: [
-    { to: '/superadmin/usuarios', label: 'Usuarios', icon: 'manage_accounts' },
+    { to: '/superadmin/docentes', label: 'Docentes', icon: 'co_present' },
     { to: '/superadmin/accesos', label: 'Solicitudes de acceso', icon: 'person_add' },
     { to: '/superadmin/estudiantes', label: 'Estudiantes', icon: 'school' },
     { to: '/superadmin/representantes', label: 'Representantes', icon: 'family_restroom' },
+    { to: '/superadmin/usuarios', label: 'Administradores', icon: 'manage_accounts' },
     { to: '/superadmin/inconsistencias', label: 'Inconsistencias', icon: 'rule' },
   ] },
   { label: 'Solicitudes', items: [

@@ -160,7 +160,8 @@ export class LoginPage {
     // Solo se respeta `next` si es una ruta interna del mismo rol (sin redirecciones abiertas).
     if (n && n.startsWith('/') && !n.startsWith('//') && u && !u.forcePasswordChange &&
         ((u.role === 'STUDENT' && (n.startsWith('/estudiante') || n.startsWith('/solicitud'))) ||
-         (u.role !== 'STUDENT' && n.startsWith('/admin')) || (u.role === 'SUPERADMIN' && n.startsWith('/superadmin')))) {
+         (u.role === 'TEACHER' && n.startsWith('/docente')) ||
+         ((u.role === 'ADMIN' || u.role === 'SUPERADMIN') && n.startsWith('/admin')) || (u.role === 'SUPERADMIN' && n.startsWith('/superadmin')))) {
       to = n;
     }
     if (u?.role === 'STUDENT' && !u.profileCompleted && !u.forcePasswordChange) to = '/estudiante/perfil';

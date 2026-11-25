@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, inject, input, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { COURSE_LABELS_LONG } from '../../../core/catalogs';
 import { apiMessage } from '../../../core/utils/errors';
 import { validateEcuadorianDni } from '../../../core/utils/validators';
@@ -123,6 +123,28 @@ const RELS = ['Madre', 'Padre', 'Abuelo/a', 'Tío/a', 'Hermano/a', 'Tutor legal'
         </section>
         </div>
       </div>
+
+      <section class="section acct" aria-labelledby="h-acct">
+        <header><span class="material-symbols-outlined hicon" aria-hidden="true">manage_accounts</span><h2 id="h-acct">Cuenta</h2></header>
+        <div class="body stack">
+          <p class="muted small">Desactivar solo impide el ingreso. Eliminar borra la cuenta, sus datos de estudiante y los representantes que no estén vinculados a otro estudiante; sus solicitudes y la auditoría se conservan.</p>
+          <div class="test">
+            <div><strong>Cuenta de prueba</strong>@if (x.user.testAccount) { <span class="tag warn">Activada</span> }
+              <p class="muted small">Puede pedir la "Materia de prueba (sistema)" para probar el flujo con un docente de prueba. Sus solicitudes quedan marcadas como prueba. Úsala solo con cuentas de prueba, nunca con estudiantes reales.</p></div>
+            <button type="button" class="btn btn-outline btn-sm" (click)="toggleTest(x)" [disabled]="busy()">{{ x.user.testAccount ? 'Quitar marca de prueba' : 'Marcar como cuenta de prueba' }}</button>
+          </div>
+          <div class="row wrap">
+            @if (x.user.isActive) {
+              <button type="button" class="btn btn-danger-outline btn-sm" (click)="deactivate(x)" [disabled]="busy()">
+                <span class="material-symbols-outlined" aria-hidden="true">block</span>Desactivar</button>
+            } @else {
+              <button type="button" class="btn btn-success btn-sm" (click)="reactivate()" [disabled]="busy()">Reactivar</button>
+            }
+            <button type="button" class="btn btn-danger-outline btn-sm" (click)="remove(x)" [disabled]="busy()">
+              <span class="material-symbols-outlined" aria-hidden="true">delete_forever</span>Eliminar cuenta…</button>
+          </div>
+        </div>
+      </section>
     } @else if (!error()) { <app-skeleton-rows [rows]="8" [cols]="3" /> }
   `,
   styles: `
@@ -141,12 +163,17 @@ const RELS = ['Madre', 'Padre', 'Abuelo/a', 'Tío/a', 'Hermano/a', 'Tutor legal'
     .stack { display: grid; gap: 10px; } .row { display: flex; gap: 8px; } .row .select { flex: 1; }
     .small { font: var(--label-md); font-weight: 400; } .hicon { color: var(--on-surface-variant); font-size: 20px; } .lockbtn { justify-self: start; }
     .section > table { border-top: 0; }
+    .acct { margin-top: 16px; }
+    .test { display: flex; gap: 12px; align-items: center; justify-content: space-between; flex-wrap: wrap; padding: 12px 14px; border-radius: 10px;
+      background: var(--surface-container-low); }
+    .test .tag { margin-left: 8px; } .test p { margin: 4px 0 0; max-width: 640px; } .row.wrap { flex-wrap: wrap; }
   `,
 })
 export class StudentDetailPage {
   private readonly api = inject(SaApi);
   private readonly confirm = inject(ConfirmService);
   private readonly toast = inject(ToastService);
+  private readonly router = inject(Router);
   readonly id = input.required<string>();
   readonly d = signal<any>(null);
   readonly error = signal<string | null>(null);
@@ -203,5 +230,42 @@ export class StudentDetailPage {
     if (!validateEcuadorianDni(this.nl.cedula)) { this.toast.error('La cédula del representante no es válida.'); return; }
     await this.run(() => this.api.link({ studentUserId: this.id(), ...this.nl, names: this.nl.names.trim() }), 'Representante vinculado');
     this.nl = { names: '', cedula: '', phone: '', relationship: 'Madre', isPrimary: false };
+  }
+
+  async deactivate(x: any) {
+    const reason = await this.confirm.ask({ title: 'Desactivar cuenta', confirmLabel: 'Desactivar', reasonMin: 10,
+      risk: `${x.user.email} no podrá ingresar hasta que se reactive. Sus datos y solicitudes se conservan.` });
+    if (reason === null) return;
+    this.busy.set(true);
+    try { await this.api.deactivate(this.id(), reason); this.toast.ok('Cuenta desactivada'); await this.load(); }
+    catch (e) { this.toast.error(apiMessage(e)); } finally { this.busy.set(false); }
+  }
+
+  async toggleTest(x: any) {
+    this.busy.set(true);
+    try {
+      const r = await this.api.setTestAccount(this.id(), !x.user.testAccount);
+      this.toast.ok(r.testAccount ? 'Marcada como cuenta de prueba' : 'Ya no es cuenta de prueba');
+      await this.load();
+    } catch (e) { this.toast.error(apiMessage(e)); } finally { this.busy.set(false); }
+  }
+
+  async reactivate() {
+    this.busy.set(true);
+    try { await this.api.reactivate(this.id()); this.toast.ok('Cuenta reactivada'); await this.load(); }
+    catch (e) { this.toast.error(apiMessage(e)); } finally { this.busy.set(false); }
+  }
+
+  async remove(x: any) {
+    const ident = x.user.email ?? '';
+    const reason = await this.confirm.ask({ title: 'Eliminar cuenta', confirmLabel: 'Eliminar definitivamente', reasonMin: 10, typeToConfirm: ident,
+      risk: 'Se borran la cuenta, sus datos de estudiante y los representantes que no estén vinculados a otro estudiante. No se puede deshacer. Sus solicitudes se conservan.' });
+    if (reason === null) return;
+    this.busy.set(true);
+    try {
+      await this.api.deleteUser(this.id(), reason, ident);
+      this.toast.ok('Cuenta eliminada');
+      void this.router.navigate(['/superadmin/estudiantes']);
+    } catch (e) { this.toast.error(apiMessage(e)); } finally { this.busy.set(false); }
   }
 }

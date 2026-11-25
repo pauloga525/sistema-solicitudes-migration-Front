@@ -29,7 +29,7 @@
         <span class="alert-actions"><button type="button" class="icon-btn" (click)="actionError.set(null)" aria-label="Cerrar"><span class="material-symbols-outlined">close</span></button></span>
       </div>
     }
-    @if (!isProcesoMejora() && isPending()) {
+    @if (isPending()) {
       <div class="decide">
         <p><strong>Esta solicitud espera tu decisión.</strong> Al negarla, el motivo queda registrado y lo ve el estudiante.</p>
         <div class="acts">
@@ -90,8 +90,12 @@
       </div>
     </div>
 
-    @if (!isProcesoMejora()) {
-      <dialog #deny class="dialog" aria-labelledby="deny-title" (close)="denyOpen.set(false)">
+    @if (isProcesoMejora()) {
+      <h2 class="exp-title" id="seguimiento">Seguimiento de la evaluación</h2>
+      <app-expediente [requestId]="id()" [refresh]="version()" (loaded)="onExpLoaded()" />
+    }
+
+    <dialog #deny class="dialog" aria-labelledby="deny-title" (close)="denyOpen.set(false)">
         <div class="dialog-head">
           <span class="d-icon"><span class="material-symbols-outlined" aria-hidden="true">block</span></span>
           <h2 id="deny-title" class="d-title">Negar solicitud</h2>
@@ -107,6 +111,5 @@
           <button type="button" class="btn btn-danger" (click)="confirmDeny()" [disabled]="actionLoading()">{{ actionLoading() ? 'Procesando...' : 'Confirmar negación' }}</button>
         </div>
       </dialog>
-    }
   }
 </app-admin-layout>

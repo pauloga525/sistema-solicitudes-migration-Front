@@ -14,8 +14,9 @@ export const SUPERADMIN_ROUTES: Routes = [
     children: [
       { path: '', pathMatch: 'full', redirectTo: 'dashboard' },
       { path: 'dashboard', title: t('Resumen'), loadComponent: () => import('./pages/dashboard-page').then((m) => m.DashboardPage) },
+      { path: 'docentes', title: t('Docentes'), loadComponent: () => import('./pages/teachers-page').then((m) => m.TeachersPage) },
       { path: 'accesos', title: t('Solicitudes de acceso'), loadComponent: () => import('./pages/access-page').then((m) => m.AccessPage) },
-      { path: 'usuarios', title: t('Usuarios'), loadComponent: () => import('./pages/users-page').then((m) => m.UsersPage) },
+      { path: 'usuarios', title: t('Administradores'), loadComponent: () => import('./pages/users-page').then((m) => m.UsersPage) },
       { path: 'estudiantes', title: t('Estudiantes'), loadComponent: () => import('./pages/students-page').then((m) => m.StudentsPage) },
       { path: 'estudiantes/:id', title: t('Ficha del estudiante'), loadComponent: () => import('./pages/student-detail-page').then((m) => m.StudentDetailPage) },
       { path: 'representantes', title: t('Representantes'), loadComponent: () => import('./pages/reps-page').then((m) => m.RepsPage) },

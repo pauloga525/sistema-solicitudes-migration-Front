@@ -5,10 +5,10 @@ import { filter } from 'rxjs';
 import { InactivityService } from '../../core/auth/inactivity.service';
 import { SessionService } from '../../core/auth/session.service';
 
-export interface NavGroup { label: string | null; items: { to: string; label: string; icon: string; exact?: boolean }[]; }
+export interface NavGroup { label: string | null; items: { to: string; label: string; icon: string; exact?: boolean; badge?: number }[]; }
 
 /**
- * Marco común de los paneles de trabajo (ADMIN y SUPERADMIN): riel lateral azul marino que en móvil
+ * Marco común de los paneles de trabajo (DOCENTE, ADMIN y SUPERADMIN): riel lateral azul marino que en móvil
  * se vuelve cajón, aviso de mantenimiento y cierre de sesión por 5 minutos de inactividad.
  */
 @Component({
@@ -29,6 +29,7 @@ export interface NavGroup { label: string | null; items: { to: string; label: st
             @for (l of g.items; track l.to) {
               <a [routerLink]="l.to" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: !!l.exact }" ariaCurrentWhenActive="page">
                 <span class="material-symbols-outlined" aria-hidden="true">{{ l.icon }}</span>{{ l.label }}
+                @if (l.badge) { <span class="nbadge tnum" [attr.aria-label]="l.badge + ' sin leer'">{{ l.badge > 99 ? '99+' : l.badge }}</span> }
               </a>
             }
           }
@@ -78,6 +79,8 @@ export interface NavGroup { label: string | null; items: { to: string; label: st
     nav a.active { background: rgb(252 204 56 / 14%); color: #fff; font-weight: 600; }
     nav a.active .material-symbols-outlined { color: var(--secondary-container); font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
     nav a:focus-visible { box-shadow: 0 0 0 2px var(--secondary-container); }
+    .nbadge { margin-left: auto; min-width: 22px; height: 20px; padding: 0 6px; border-radius: 10px; display: grid; place-items: center;
+      background: var(--secondary-container); color: var(--on-secondary-container); font: 700 0.6875rem/1 var(--font-sans); }
     .me { display: flex; align-items: center; gap: 10px; padding: 12px 14px; border-top: 1px solid rgb(255 255 255 / 10%); }
     .av { width: 34px; height: 34px; border-radius: 8px; display: grid; place-items: center; background: var(--secondary-container); color: var(--on-secondary-container); font-weight: 700; flex: none; }
     .who { display: grid; min-width: 0; line-height: 1.2; }
@@ -112,7 +115,7 @@ export class PanelFrame {
   readonly home = input.required<string>();
   readonly menuOpen = signal(false);
   readonly initial = computed(() => (this.session.displayName()[0] ?? 'U').toUpperCase());
-  readonly roleLabel = computed(() => (this.session.role() === 'SUPERADMIN' ? 'Super Administrador' : 'Administrador'));
+  readonly roleLabel = computed(() => ({ SUPERADMIN: 'Super Administrador', TEACHER: 'Docente' } as Record<string, string>)[this.session.role() ?? ''] ?? 'Administrador');
 
   constructor() {
     const inactivity = inject(InactivityService);

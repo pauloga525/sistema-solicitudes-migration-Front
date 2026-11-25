@@ -22,6 +22,7 @@ export const routes: Routes = [
   { path: 'estudiante', loadChildren: () => import('./features/student/student.routes').then((m) => m.STUDENT_ROUTES) },
   { path: 'admin', pathMatch: 'full', redirectTo: 'admin/dashboard' },
   { path: 'admin', loadChildren: () => import('./features/admin/admin.routes').then((m) => m.ADMIN_ROUTES) },
+  { path: 'docente', loadChildren: () => import('./features/teacher/teacher.routes').then((m) => m.TEACHER_ROUTES) },
   { path: 'superadmin', loadChildren: () => import('./features/superadmin/superadmin.routes').then((m) => m.SUPERADMIN_ROUTES) },
 
   { path: '**', title: 'Página no encontrada · UETS', loadComponent: () => import('./features/public/not-found/not-found-page').then((m) => m.NotFoundPage) },

@@ -35,3 +35,4 @@ form { display: grid; gap: 20px; }
 .blocked-icon { width: 80px; height: 80px; display: grid; place-items: center; border-radius: 50%; background: var(--warning-container); color: var(--warning);
   .material-symbols-outlined { font-size: 40px; } }
 .from-profile { font: var(--body-md); color: var(--on-surface-variant); margin: -4px 0 12px; } .from-profile a { font-weight: 600; }
+.subject.used { opacity: 0.6; cursor: not-allowed; } .subject.used small { color: var(--on-surface-variant); }

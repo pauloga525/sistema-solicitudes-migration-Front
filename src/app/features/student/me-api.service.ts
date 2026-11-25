@@ -6,7 +6,10 @@ import { API_URL } from '../../core/config';
 export interface Profile { names: string; firstNames: string | null; lastNames: string | null; cedula: string; course: string; paralelo: string; specialty: string | null; padronMatch: boolean; completed: boolean; }
 export interface Rep { id: string; linkId: string; names: string; firstNames: string | null; lastNames: string | null; cedula: string; phone: string; email: string | null; relationship: string; isPrimary: boolean; }
 export interface Locks { student: boolean; representative: boolean; }
-export interface MyRequest { _id: string; requestNumber: string; status: string; course: string; paralelo: string; payload: { subjects?: string[] }; rejectionReason?: string; dueAt?: string | null; createdAt: string; }
+export interface Evaluation { subject: string; track: 'por_atender' | 'programada' | 'evaluado' | 'no_asistio'; scheduledAt: string | null; teacher: string | null;
+  note?: string | null; missedCount?: number; }
+export interface MyRequest { _id: string; requestNumber: string; status: string; course: string; paralelo: string; payload: { subjects?: string[] }; rejectionReason?: string; dueAt?: string | null; createdAt: string; evaluations?: Evaluation[]; }
+export interface StudentNotice { id: string; kind: string; title: string; body: string; createdAt: string; read: boolean; requestId: string | null; subject: string | null; }
 
 @Injectable({ providedIn: 'root' })
 export class MeApi {
@@ -19,8 +22,11 @@ export class MeApi {
   removeRep(id: string) { return firstValueFrom(this.http.delete<{ representatives: Rep[]; completed: boolean }>(`${this.b}/representatives/${id}`)); }
   requests() { return firstValueFrom(this.http.get<{ data: MyRequest[] }>(`${this.b}/requests`)); }
   /** Materias que cursa el estudiante (según curso/paralelo) y habilitadas para el trámite. */
-  subjects(requestType = 'proceso_mejora') { return firstValueFrom(this.http.get<{ course: string; specialty: string | null; subjects: string[] }>(`${this.b}/subjects`, { params: { requestType } })); }
+  subjects(requestType = 'proceso_mejora') { return firstValueFrom(this.http.get<{ course: string; specialty: string | null; subjects: string[]; usedThisTrimester?: string[]; trimester?: string | null }>(`${this.b}/subjects`, { params: { requestType } })); }
   quota() { return firstValueFrom(this.http.get<{ aporte: { name: string; trimestre: string; anio: string; endDate: string } | null; limite: number; consumido: number; disponible: number }>(`${this.b}/requests/quota`)); }
+  /** Avisos del sistema (p. ej. el docente programó la evaluación). */
+  notifications() { return firstValueFrom(this.http.get<StudentNotice[]>(`${this.b}/notifications`)); }
+  readNotifications(ids: string[] | 'all') { return firstValueFrom(this.http.post<{ updated: number }>(`${this.b}/notifications/read`, { ids })); }
   cancel(id: string) { return firstValueFrom(this.http.post<MyRequest>(`${this.b}/requests/${id}/cancel`, {})); }
   pdf(id: string) { return firstValueFrom(this.http.get(`${this.b}/requests/${id}/pdf`, { responseType: 'blob' })); }
 }

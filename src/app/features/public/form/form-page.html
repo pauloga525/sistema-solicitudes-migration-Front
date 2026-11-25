@@ -139,13 +139,20 @@
 
         @if (activeSubjects(); as list) {
           @if (list.length) {
-            <p class="subjects-hint">Se muestran solo las materias que cursas en {{ courseName() }}.</p>
+            <p class="subjects-hint">Se muestran solo las materias que cursas en {{ courseName() }}. Cada materia se puede solicitar una sola vez por trimestre.</p>
             <div class="subjects" role="group" aria-labelledby="subjects-label">
               @for (s of list; track s) {
-                <label class="check subject" [class.on]="isChecked(s)">
-                  <input type="checkbox" [checked]="isChecked(s)" (change)="toggleSubject(s)" />
-                  <span>{{ s }}</span>
-                </label>
+                @if (usedSubjects().includes(s)) {
+                  <label class="check subject used" title="Ya la solicitaste en este trimestre">
+                    <input type="checkbox" disabled />
+                    <span>{{ s }} <small>· ya solicitada este trimestre</small></span>
+                  </label>
+                } @else {
+                  <label class="check subject" [class.on]="isChecked(s)">
+                    <input type="checkbox" [checked]="isChecked(s)" (change)="toggleSubject(s)" />
+                    <span>{{ s }}</span>
+                  </label>
+                }
               }
             </div>
           } @else {

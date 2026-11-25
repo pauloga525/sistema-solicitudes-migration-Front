@@ -54,3 +54,13 @@ OUT.parent.mkdir(parents=True, exist_ok=True)
 font.flavor = "woff2"
 font.save(OUT)
 print("→", OUT, OUT.stat().st_size, "bytes")
+
+# Versión en la URL para que el navegador no use una fuente anterior guardada en caché.
+import hashlib
+ver = hashlib.sha1(OUT.read_bytes()).hexdigest()[:8]
+for ref in (ROOT / "src/index.html", ROOT / "src/styles/_base.scss"):
+    txt = ref.read_text(encoding="utf-8")
+    new = re.sub(r"(material-symbols-outlined-subset\.woff2)(\?v=[0-9a-f]+)?", rf"\1?v={ver}", txt)
+    if new != txt:
+        ref.write_text(new, encoding="utf-8")
+print("versión", ver)

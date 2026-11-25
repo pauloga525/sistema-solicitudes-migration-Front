@@ -23,6 +23,8 @@ export function roleGuard(...roles: Role[]): CanActivateFn {
 export const adminGuard = roleGuard('ADMIN', 'SUPERADMIN');
 export const superadminGuard = roleGuard('SUPERADMIN');
 export const studentGuard = roleGuard('STUDENT');
+/** Panel docente. ADMIN y SUPERADMIN entran en modo vista previa (datos de ejemplo) hasta cargar los docentes. */
+export const teacherGuard = roleGuard('TEACHER', 'ADMIN', 'SUPERADMIN');
 
 /** Pantallas de solicitud: además del rol, el estudiante debe tener sus datos completos. */
 export const studentReadyGuard: CanActivateFn = (route, state) => {

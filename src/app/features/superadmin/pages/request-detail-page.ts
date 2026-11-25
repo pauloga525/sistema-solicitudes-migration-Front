@@ -1,6 +1,7 @@
+import { EvalChips, EvalChip } from '../../../shared/ui/eval-chips';
 import { ChangeDetectionStrategy, Component, inject, input, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { COURSE_LABELS_LONG, humanize } from '../../../core/catalogs';
 import { apiMessage } from '../../../core/utils/errors';
 import { ConfirmService } from '../../../shared/ui/confirm.service';
@@ -11,7 +12,7 @@ import { HistoryEvent, SaApi } from '../sa-api.service';
 
 @Component({
   selector: 'app-sa-request-detail',
-  imports: [FormsModule, RouterLink, StatusKey, SkeletonRows],
+  imports: [FormsModule, RouterLink, StatusKey, SkeletonRows, EvalChips],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <a routerLink="/superadmin/solicitudes" class="back"><span class="material-symbols-outlined" aria-hidden="true">arrow_back</span>Todas las solicitudes</a>
@@ -31,7 +32,7 @@ import { HistoryEvent, SaApi } from '../sa-api.service';
               <dt>Estudiante</dt><dd>{{ x.studentName }} · {{ x.studentDni }}</dd>
               <dt>Representante</dt><dd>{{ x.representativeName }} · {{ x.representativeDni }}</dd>
               <dt>Curso</dt><dd>{{ course(x.course) }} {{ x.paralelo }} · Campus {{ hum(x.campus) }}</dd>
-              <dt>Materias</dt><dd>{{ x.subjects.join(', ') }}</dd>
+              <dt>Materias y evaluación</dt><dd><app-eval-chips [items]="evals()" [fallback]="x.subjects" /></dd>
               @if (x.rejectionReason) { <dt>Motivo de negación</dt><dd>{{ x.rejectionReason }} <span class="muted">({{ x.rejectedBy }})</span></dd> }
               <dt>Origen</dt><dd>{{ x.legacy ? 'Formulario anterior al registro de estudiantes' : 'Cuenta de estudiante' }}
                 @if (x.studentUserId) { · <a [routerLink]="['/superadmin/estudiantes', x.studentUserId]">Ver ficha</a> }</dd>
@@ -80,6 +81,13 @@ import { HistoryEvent, SaApi } from '../sa-api.service';
               </div>
             </div>
           </section>
+          <section class="section danger-zone"><header><h2>Eliminar solicitud</h2></header>
+            <div class="body stack">
+              <p class="muted small">Para solicitudes de prueba o enviadas por error. Se borra de forma permanente junto con su seguimiento docente y sus avisos, y deja de contar para el cupo y los límites del estudiante. Se conservan su historial y una copia de sus datos en la auditoría. Si solo quieres anularla, usa «Corregir estado».</p>
+              <div class="row"><button type="button" class="btn btn-danger-outline" [disabled]="busy()" (click)="remove(x)">
+                <span class="material-symbols-outlined" aria-hidden="true">delete_forever</span>Eliminar solicitud…</button></div>
+            </div>
+          </section>
         </div>
       </div>
     } @else if (!error()) { <app-skeleton-rows [rows]="8" [cols]="3" /> }
@@ -91,6 +99,8 @@ import { HistoryEvent, SaApi } from '../sa-api.service';
     .row { display: flex; gap: 8px; }
     h1.mono { font-variant-numeric: tabular-nums; }
     .tr { font-weight: 400; color: var(--on-surface-variant); margin-left: 8px; }
+    .small { font: var(--label-md); font-weight: 400; margin: 0; }
+    .danger-zone { border-color: color-mix(in srgb, var(--error) 35%, var(--outline-variant)); }
     .lede { display: flex; align-items: center; flex-wrap: wrap; gap: 4px; }
   `,
 })
@@ -98,9 +108,11 @@ export class RequestDetailPage {
   private readonly api = inject(SaApi);
   private readonly confirm = inject(ConfirmService);
   private readonly toast = inject(ToastService);
+  private readonly router = inject(Router);
   readonly id = input.required<string>();
   readonly r = signal<any>(null);
   readonly history = signal<HistoryEvent[]>([]);
+  readonly evals = signal<EvalChip[]>([]);
   readonly allowed = signal<string[]>([]);
   readonly staff = signal<{ id: string; name: string }[]>([]);
   readonly error = signal<string | null>(null);
@@ -121,6 +133,7 @@ export class RequestDetailPage {
   private apply(d: any) {
     this.r.set(d.request);
     this.history.set(d.history);
+    this.evals.set(d.evaluations ?? []);
     this.allowed.set(d.allowedCorrections ?? []);
     this.assignee = d.request.assignedTo ?? '';
     this.due = toLocalInput(d.request.dueAt);
@@ -135,6 +148,22 @@ export class RequestDetailPage {
     this.busy.set(true);
     try { await fn(); this.toast.ok(ok); await this.load(); }
     catch (e) { this.toast.error(apiMessage(e, 'No se pudo completar la acción.')); await this.load(); }
+    finally { this.busy.set(false); }
+  }
+
+  async remove(x: any) {
+    const num = x.requestNumber as string;
+    const reason = await this.confirm.ask({
+      title: `Eliminar la solicitud ${num}`, confirmLabel: 'Eliminar definitivamente', reasonMin: 10, typeToConfirm: num,
+      risk: `Se borra ${num} de ${x.studentName} de forma permanente, con su seguimiento docente y sus avisos. No se puede deshacer. El estudiante recupera el cupo de esas materias.`,
+    });
+    if (reason === null) return;
+    this.busy.set(true);
+    try {
+      await this.api.deleteRequest(this.id(), reason, num);
+      this.toast.ok(`Solicitud ${num} eliminada`);
+      void this.router.navigate(x.studentUserId ? ['/superadmin/estudiantes', x.studentUserId] : ['/superadmin/solicitudes']);
+    } catch (e) { this.toast.error(apiMessage(e, 'No se pudo eliminar la solicitud.')); }
     finally { this.busy.set(false); }
   }
 

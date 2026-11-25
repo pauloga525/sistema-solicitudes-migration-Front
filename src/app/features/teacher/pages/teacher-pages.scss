@@ -1,0 +1,26 @@
+// Estilos compartidos del panel docente (el resto viene de _panel.scss).
+
+// Franja de 3 etapas del seguimiento del docente.
+.stages.tri { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+@media (max-width: 760px) { .stages.tri { grid-template-columns: none; } }
+
+// Claves de seguimiento: dorado = requiere acción, azul = programada, verde = evaluado.
+.key.t-por_atender .sq { background: #c99700; }
+.key.t-programada .sq { background: #335f9d; }
+.key.t-evaluado .sq { background: #1b7a43; }
+.key.t-no_asistio .sq { background: #a3402e; }
+.key.t-cerrada .sq { background: #8a909c; }
+
+// La franja también sirve de filtro: botones con el mismo aspecto que las fichas de etapa.
+button.stage { border: 0; border-right: 1px solid var(--outline-variant); background: var(--surface-container-lowest); text-align: left;
+  font: inherit; color: inherit; cursor: pointer; }
+button.stage:last-child { border-right: 0; }
+button.stage:hover { background: var(--surface-container-low); }
+button.stage.now { background: #fff6d6; }
+button.stage.sel { box-shadow: inset 0 0 0 2px var(--primary-container); }
+button.stage.now.sel { box-shadow: inset 0 0 0 2px var(--primary-container), inset 0 -4px 0 var(--secondary-container); }
+button.stage:focus-visible { outline: 2px solid var(--primary-container); outline-offset: -2px; }
+
+// Etiquetas que solo se ven en el celular, donde la tabla se vuelve ficha.
+.mlabel { display: none; }
+@media (max-width: 760px) { .mlabel { display: inline; color: var(--on-surface-variant); font-weight: 400; } }

@@ -62,6 +62,8 @@ export class FormPage {
 
   readonly activeCourses = signal<string[]>(FALLBACK_COURSES);
   /** null mientras se consultan las materias del estudiante. */
+  /** Materias ya pedidas en el trimestre (o en trámite): se muestran deshabilitadas. */
+  readonly usedSubjects = signal<string[]>([]);
   readonly activeSubjects = signal<string[] | null>(null);
   /** null mientras se consulta; false bloquea el formulario. */
   readonly aporteActivo = signal<boolean | null>(null);
@@ -101,7 +103,9 @@ export class FormPage {
     // Solo las materias que cursa el estudiante (malla por curso y especialidad; el servidor lo vuelve a validar).
     this.me.subjects().then((x) => {
       this.activeSubjects.set(x.subjects);
-      const keep = this.form.controls.subjects.value.filter((s) => x.subjects.includes(s));
+      const used = x.usedThisTrimester ?? [];
+      this.usedSubjects.set(used);
+      const keep = this.form.controls.subjects.value.filter((s) => x.subjects.includes(s) && !used.includes(s));
       if (keep.length !== this.form.controls.subjects.value.length) this.form.controls.subjects.setValue(keep);
     }, () => this.activeSubjects.set([]));
     this.api.getSubmissionWindow().then((w) => this.closedMsg.set(w.open ? null : w.message), () => undefined);

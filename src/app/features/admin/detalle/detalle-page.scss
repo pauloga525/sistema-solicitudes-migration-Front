@@ -14,3 +14,4 @@
 .big-icon { font-size: 40px; color: var(--outline); } .big-icon.err { color: var(--error); }
 .d-icon { width: 40px; height: 40px; display: grid; place-items: center; border-radius: 10px; background: var(--error-container); color: var(--error); flex: none; }
 .d-title { font: var(--title-lg); }
+.exp-title { font: var(--title-lg); margin: 8px 0 0; scroll-margin-top: 16px; }
