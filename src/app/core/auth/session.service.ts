@@ -25,6 +25,8 @@ interface SessionResponse {
   passwordRegistration: boolean;
   passwordLogin?: boolean;
   studentEmailSuffix?: string;
+  /** Token CSRF vigente (para cuando el backend está en otro dominio y su cookie no se puede leer). */
+  csrfToken?: string;
 }
 
 /**
@@ -46,6 +48,8 @@ export class SessionService {
   readonly passwordLogin = signal(false);
   readonly studentEmailSuffix = signal('.est');
   readonly loaded = signal(false);
+  /** Token CSRF recibido de /auth/session (respaldo si la cookie uets_csrf no es legible). */
+  readonly csrfToken = signal<string | null>(null);
   readonly role = computed(() => this.user()?.role ?? null);
   readonly displayName = computed(() => {
     const u = this.user();
@@ -62,6 +66,7 @@ export class SessionService {
       this.passwordRegistration.set(s.passwordRegistration !== false);
       this.passwordLogin.set(s.passwordLogin === true);
       this.studentEmailSuffix.set(s.studentEmailSuffix || '.est');
+      this.csrfToken.set(s.csrfToken ?? null);
     } catch {
       this.user.set(null);
     } finally {
