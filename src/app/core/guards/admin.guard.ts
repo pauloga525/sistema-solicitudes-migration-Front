@@ -15,7 +15,8 @@ export function roleGuard(...roles: Role[]): CanActivateFn {
     const u = session.user();
     if (!u) return router.createUrlTree(['/ingresar'], { queryParams: { next: state.url } });
     if (u.forcePasswordChange) return router.createUrlTree(['/cambiar-contrasena']);
-    if (!roles.includes(u.role)) return router.createUrlTree([u.home]);
+    const mine = u.roles?.length ? u.roles : [u.role];
+    if (!mine.some((r) => roles.includes(r))) return router.createUrlTree([u.home]);
     return true;
   };
 }
@@ -23,7 +24,7 @@ export function roleGuard(...roles: Role[]): CanActivateFn {
 export const adminGuard = roleGuard('ADMIN', 'SUPERADMIN');
 export const superadminGuard = roleGuard('SUPERADMIN');
 export const studentGuard = roleGuard('STUDENT');
-/** Panel docente. ADMIN y SUPERADMIN entran en modo vista previa (datos de ejemplo) hasta cargar los docentes. */
+/** Panel docente. Con rol de docente (principal o adicional) ve sus datos; ADMIN y SUPERADMIN sin ese rol, una vista previa. */
 export const teacherGuard = roleGuard('TEACHER', 'ADMIN', 'SUPERADMIN');
 
 /** Pantallas de solicitud: además del rol, el estudiante debe tener sus datos completos. */

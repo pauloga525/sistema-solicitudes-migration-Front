@@ -164,20 +164,20 @@ type PreviewFilter = 'revisar' | 'sin_correo' | 'todos';
             <h3>Cuenta</h3>
             @if (t.account; as acc) {
               <dl class="kv">
-                <dt>Rol</dt><dd>{{ roleLabels[acc.role] ?? acc.role }}{{ acc.isActive ? '' : ' · desactivada' }}</dd>
+                <dt>Roles</dt><dd>{{ rolesLabel(acc) }}{{ acc.isActive ? '' : ' · desactivada' }}</dd>
                 <dt>Último ingreso</dt><dd>{{ acc.lastLoginAt ? dt(acc.lastLoginAt) : 'Aún no ha ingresado' }}</dd>
                 @if (t.manual) { <dt>Origen</dt><dd>Rol de docente asignado a mano (no viene del distributivo)</dd> }
               </dl>
-              @if (acc.role !== 'TEACHER') {
-                <p class="alert alert-info"><span class="material-symbols-outlined" aria-hidden="true">info</span>
-                  Esta cuenta tiene rol {{ roleLabels[acc.role] ?? acc.role }}: no entra al panel docente hasta que se le dé el rol de docente.</p>
+              @if (acc.role === 'SUPERADMIN') {
+                <p class="muted small">Es super administrador: sus roles se cambian en Administradores.</p>
+              } @else {
+                <div class="checks">
+                  <label class="chk"><input type="checkbox" [checked]="draft().has('TEACHER')" (change)="toggleDraft('TEACHER')" /><span>Docente</span></label>
+                  <label class="chk"><input type="checkbox" [checked]="draft().has('ADMIN')" (change)="toggleDraft('ADMIN')" /><span>Administrador</span></label>
+                </div>
+                @if (!draft().has('TEACHER')) { <p class="field-hint">Sin el rol de docente no entra al panel docente ni recibe avisos de sus materias.</p> }
+                <div class="row"><button type="button" class="btn btn-outline btn-sm" [disabled]="busy() || !draftChanged(acc)" (click)="saveRoles(t)">Guardar roles</button></div>
               }
-              <div class="row">
-                <select class="select" [(ngModel)]="roleDraft" aria-label="Rol de la cuenta">
-                  <option value="TEACHER">Docente</option><option value="ADMIN">Administrador</option>
-                </select>
-                <button type="button" class="btn btn-outline btn-sm" [disabled]="busy() || roleDraft === acc.role" (click)="changeRole(t)">Cambiar rol</button>
-              </div>
             } @else { <p class="muted">Sin cuenta: guarda su correo institucional para crearla.</p> }
           </section>
           <section class="block">
@@ -245,6 +245,10 @@ type PreviewFilter = 'revisar' | 'sin_correo' | 'todos';
     .icon-btn.sm { width: 28px; height: 28px; }
     .icon-btn.sm .material-symbols-outlined { font-size: 18px; }
     .row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+    .checks { display: flex; gap: 18px; flex-wrap: wrap; }
+    .chk { display: inline-flex; align-items: center; gap: 8px; font: var(--body-md); cursor: pointer; }
+    .chk input { width: 18px; height: 18px; accent-color: var(--primary-container); }
+    .small { font-size: 0.8125rem; margin: 0; }
     .row .select { flex: 1 1 200px; width: auto; }
     .addasg { display: flex; gap: 8px; flex-wrap: wrap; align-items: flex-end; }
     .addasg .field { min-width: 120px; }
@@ -290,7 +294,14 @@ export class TeachersPage {
   readonly sel = signal<TeacherDetail | null>(null);
   readonly catalog = signal<TeacherCatalog[]>([]);
   emailDraft = '';
-  roleDraft = 'TEACHER';
+  readonly draft = signal<Set<string>>(new Set());
+  toggleDraft(r: string) { this.draft.update((s) => { const n = new Set(s); if (n.has(r)) n.delete(r); else n.add(r); return n; }); }
+  rolesLabel(acc: { role: string; roles?: string[] }) { return (acc.roles ?? [acc.role]).map((r) => this.roleLabels[r] ?? r).join(' + '); }
+  draftChanged(acc: { role: string; roles?: string[] }) {
+    const cur = acc.roles ?? [acc.role];
+    const d = [...this.draft()];
+    return d.length > 0 && (d.length !== cur.length || d.some((r) => !cur.includes(r)));
+  }
   readonly testSubject = 'Materia de prueba (sistema)';
   asg = { course: '', paralelo: '', subject: '' };
   paralelos() { return this.catalog().find((c) => c.course === this.asg.course)?.paralelos ?? []; }
@@ -364,7 +375,7 @@ export class TeachersPage {
       const d = await this.api.teacher(t.id);
       this.sel.set(d);
       this.emailDraft = d.email ?? '';
-      this.roleDraft = d.account?.role ?? 'TEACHER';
+      this.draft.set(new Set(d.account?.roles ?? (d.account ? [d.account.role] : [])));
       this.asg = { course: '', paralelo: '', subject: '' };
       if (!this.catalog().length) this.api.teacherCatalog().then((c) => this.catalog.set(c), () => undefined);
       this.det().nativeElement.showModal();
@@ -382,23 +393,24 @@ export class TeachersPage {
     finally { this.busy.set(false); }
   }
 
-  async changeRole(t: TeacherDetail) {
+  async saveRoles(t: TeacherDetail) {
     const acc = t.account;
     if (!acc) return;
-    const to = this.roleDraft;
+    const roles = ['ADMIN', 'TEACHER'].filter((r) => this.draft().has(r));
     const reason = await this.confirmSvc.ask({
-      title: `Cambiar rol a ${ROLE_LABELS[to] ?? to}`, confirmLabel: 'Cambiar rol', reasonMin: 10,
-      risk: to === 'TEACHER' ? 'Entrará al panel docente y verá solo las solicitudes de sus materias. Sus sesiones abiertas se cierran.'
-        : 'Entrará al panel de administración y dejará el panel docente. Sus sesiones abiertas se cierran.',
+      title: 'Guardar roles', confirmLabel: 'Guardar roles', reasonMin: 10,
+      risk: `Quedará como: ${roles.map((r) => ROLE_LABELS[r]).join(' + ')}. Con los dos roles entra al panel del administrador y desde el menú pasa al panel docente.`,
     });
     if (reason === null) return;
     this.busy.set(true);
     try {
-      await this.api.changeRole(acc.id, to, reason);
-      this.toast.ok('Rol actualizado');
-      this.sel.set(await this.api.teacher(t.id));
+      await this.api.setRoles(acc.id, roles, reason);
+      this.toast.ok('Roles actualizados');
+      const d = await this.api.teacher(t.id);
+      this.sel.set(d);
+      this.draft.set(new Set(d.account?.roles ?? (d.account ? [d.account.role] : [])));
       void this.load(this.data()?.page ?? 1);
-    } catch (e) { this.toast.error(apiMessage(e, 'No se pudo cambiar el rol.')); }
+    } catch (e) { this.toast.error(apiMessage(e, 'No se pudieron guardar los roles.')); }
     finally { this.busy.set(false); }
   }
 

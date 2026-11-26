@@ -81,11 +81,11 @@ export class TeacherShell {
         { to: '/docente/notificaciones', label: 'Notificaciones', icon: 'notifications', badge: this.api.unread() },
       ] },
     ];
-    const r = this.session.role();
-    if (r === 'ADMIN' || r === 'SUPERADMIN') {
+    const sa = this.session.hasRole('SUPERADMIN');
+    if (sa || this.session.hasRole('ADMIN')) {
       base.push({ label: 'Otras áreas', items: [
         { to: '/admin/dashboard', label: 'Panel del administrador', icon: 'inbox' },
-        ...(r === 'SUPERADMIN' ? [{ to: '/superadmin/dashboard', label: 'Super administración', icon: 'shield' }] : []),
+        ...(sa ? [{ to: '/superadmin/dashboard', label: 'Super administración', icon: 'shield' }] : []),
       ] });
     }
     return base;

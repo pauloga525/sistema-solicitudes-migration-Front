@@ -26,7 +26,9 @@ const BASE: NavGroup[] = [
 export class AdminShell {
   private readonly session = inject(SessionService);
   readonly groups = computed<NavGroup[]>(() => [...BASE, { label: 'Otras áreas', items: [
-    { to: '/docente', label: 'Panel docente (vista previa)', icon: 'co_present' },
+    this.session.hasRole('TEACHER')
+      ? { to: '/docente', label: 'Panel docente', icon: 'co_present' }
+      : { to: '/docente', label: 'Panel docente (vista previa)', icon: 'co_present' },
     ...(this.session.role() === 'SUPERADMIN' ? [{ to: '/superadmin/dashboard', label: 'Super administración', icon: 'shield' }] : []),
   ] }]);
 }

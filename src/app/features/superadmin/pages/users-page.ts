@@ -45,7 +45,7 @@ import { Dict, Page, SaApi, UserRow } from '../sa-api.service';
               @for (u of page()!.rows; track u.id) {
                 <tr class="clickable" (click)="open(u)">
                   <td><button type="button" class="linkish strong" (click)="$event.stopPropagation(); open(u)">{{ u.name || '(sin nombre)' }}</button><span class="sub">{{ u.email || u.username }}</span></td>
-                  <td>{{ roleLabels[u.role] }}
+                  <td>{{ u.roleLabel || roleLabels[u.role] }}
                     @if (u.legacy) { <span class="tag" title="Cuenta copiada del sistema anterior">original</span> }</td>
                   <td>
                     @if (!u.isActive) { <span class="key k-rechazado"><span class="sq" aria-hidden="true"></span>Desactivado</span> }
@@ -120,7 +120,7 @@ import { Dict, Page, SaApi, UserRow } from '../sa-api.service';
             <dt>Correo</dt><dd>{{ u.email || '—' }}</dd>
             <dt>Usuario</dt><dd>{{ u.username || '—' }}</dd>
             <dt>Cédula</dt><dd>{{ u.cedula || '—' }}</dd>
-            <dt>Rol</dt><dd>{{ roleLabels[u.role] }}</dd>
+            <dt>Rol</dt><dd>{{ u.roleLabel || roleLabels[u.role] }}</dd>
             <dt>Ingreso</dt><dd>{{ u.google ? 'Cuenta de Google vinculada' : 'Sin Google' }}{{ u.hasPassword ? ' · con contraseña' : ' · sin contraseña' }}</dd>
             <dt>Estado</dt><dd>{{ u.isActive ? 'Activo' : 'Desactivado' }}@if (u.forcePasswordChange) { · contraseña temporal hasta {{ fmtDateTime(u.tempPasswordExpiresAt) }} }</dd>
             <dt>Último ingreso</dt><dd>{{ u.lastLoginAt ? fmtDateTime(u.lastLoginAt) : 'Nunca' }}</dd>
@@ -130,8 +130,21 @@ import { Dict, Page, SaApi, UserRow } from '../sa-api.service';
           @if (isSelf()) {
             <p class="alert alert-info"><span class="material-symbols-outlined" aria-hidden="true">info</span>Es tu propia cuenta: no puedes cambiar tu rol ni desactivarte. Para cambiar tu contraseña usa «Cambiar contraseña».</p>
           } @else {
+            @if (u.role !== 'STUDENT') {
+              <section class="block">
+                <h3>Roles</h3>
+                <p class="muted small">Una misma cuenta puede ser administrador y docente. Entra al panel del rol principal y desde el menú pasa al otro.</p>
+                <div class="checks">
+                  <label class="chk"><input type="checkbox" [checked]="u.role === 'SUPERADMIN' || draftRoles().has('ADMIN')" [disabled]="u.role === 'SUPERADMIN'"
+                         (change)="toggleRole('ADMIN')" />
+                    <span>{{ u.role === 'SUPERADMIN' ? 'Super administrador' : 'Administrador' }}</span></label>
+                  <label class="chk"><input type="checkbox" [checked]="draftRoles().has('TEACHER')" (change)="toggleRole('TEACHER')" /><span>Docente</span></label>
+                </div>
+                <div class="row"><button type="button" class="btn btn-outline" [disabled]="busy() || !rolesChanged(u)" (click)="saveRoles(u)">Guardar roles</button></div>
+              </section>
+            }
             <section class="block">
-              <h3>Rol</h3>
+              <h3>{{ u.role === 'STUDENT' ? 'Rol' : 'Cambiar rol principal' }}</h3>
               <div class="row">
                 <select class="select" [(ngModel)]="newRole" aria-label="Nuevo rol">
                   <option value="TEACHER">Docente</option><option value="ADMIN">Administrador</option><option value="SUPERADMIN">Super administrador</option>
@@ -139,6 +152,7 @@ import { Dict, Page, SaApi, UserRow } from '../sa-api.service';
                 </select>
                 <button type="button" class="btn btn-outline" [disabled]="newRole === u.role || busy()" (click)="changeRole(u)">Cambiar rol</button>
               </div>
+              @if (u.role !== 'STUDENT') { <span class="field-hint">Para dar o quitar la super administración. Los roles adicionales se conservan.</span> }
             </section>
             <section class="block">
               <h3>Acceso</h3>
@@ -210,6 +224,10 @@ import { Dict, Page, SaApi, UserRow } from '../sa-api.service';
     .block h3 { font: var(--title-md); }
     .danger-zone h3 { color: var(--error); }
     .danger-zone p { margin: 0; font-size: 0.875rem; }
+    .checks { display: flex; gap: 18px; flex-wrap: wrap; }
+    .chk { display: inline-flex; align-items: center; gap: 8px; font: var(--body-md); cursor: pointer; }
+    .chk input { width: 18px; height: 18px; accent-color: var(--primary-container); }
+    .small { font-size: 0.8125rem; margin: 0; }
     .row { display: flex; gap: 8px; } .row .select { flex: 1; } .wrap { flex-wrap: wrap; }
     .one { grid-template-columns: 1fr; }
     .compact td, .compact th { padding: 8px 10px; height: auto; }
@@ -302,6 +320,7 @@ export class UsersPage {
     this.access.set(null);
     this.sel.set(u);
     this.newRole = u.role;
+    this.draftRoles.set(new Set(u.roles ?? [u.role]));
     this.detailDlg().nativeElement.showModal();
     try {
       const full = await this.api.user(u.id);
@@ -329,6 +348,31 @@ export class UsersPage {
     } finally {
       this.busy.set(false);
     }
+  }
+
+  readonly draftRoles = signal<Set<string>>(new Set());
+  toggleRole(r: string) { this.draftRoles.update((s) => { const n = new Set(s); if (n.has(r)) n.delete(r); else n.add(r); return n; }); }
+  private wantedRoles(u: UserRow): string[] {
+    const s = new Set(this.draftRoles());
+    if (u.role === 'SUPERADMIN') { s.add('SUPERADMIN'); s.delete('ADMIN'); }
+    return ['SUPERADMIN', 'ADMIN', 'TEACHER'].filter((r) => s.has(r));
+  }
+  rolesChanged(u: UserRow): boolean {
+    const cur = (u.roles ?? [u.role]).filter((r) => !(u.role === 'SUPERADMIN' && r === 'ADMIN'));
+    const w = this.wantedRoles(u);
+    return w.length > 0 && (w.length !== cur.length || w.some((r) => !cur.includes(r)));
+  }
+  async saveRoles(u: UserRow) {
+    const roles = this.wantedRoles(u);
+    if (!roles.length) { this.toast.error('La cuenta debe tener al menos un rol.'); return; }
+    const reason = await this.confirm.ask({
+      title: 'Guardar roles', confirmLabel: 'Guardar roles', reasonMin: 10,
+      risk: `Quedará como: ${roles.map((r) => ROLE_LABELS[r]).join(' + ')}. ${roles.includes('TEACHER') ? 'Como docente, en la sección Docentes se le asignan sus materias. ' : ''}Queda registrado en la auditoría.`,
+    });
+    if (reason === null) return;
+    await this.act(() => this.api.setRoles(u.id, roles, reason), 'Roles actualizados');
+    const s = this.sel();
+    if (s) this.draftRoles.set(new Set(s.roles ?? [s.role]));
   }
 
   async changeRole(u: UserRow) {

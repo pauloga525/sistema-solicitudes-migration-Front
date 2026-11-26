@@ -12,10 +12,10 @@ export const TEACHER_ROUTES: Routes = [
     path: '',
     component: TeacherShell,
     canActivate: [teacherGuard],
-    // El docente ve sus datos reales; ADMIN y SUPERADMIN ven una vista previa con datos de ejemplo.
+    // Quien tiene el rol de docente (aunque sea adicional) ve sus datos reales; el resto del personal, una vista previa.
     providers: [DemoTeacherApi, HttpTeacherApi, {
       provide: TeacherApi,
-      useFactory: () => (inject(SessionService).role() === 'TEACHER' ? inject(HttpTeacherApi) : inject(DemoTeacherApi)),
+      useFactory: () => (inject(SessionService).hasRole('TEACHER') ? inject(HttpTeacherApi) : inject(DemoTeacherApi)),
     }],
     children: [
       { path: '', title: t('Inicio'), loadComponent: () => import('./pages/teacher-home-page').then((m) => m.TeacherHomePage) },

@@ -12,7 +12,7 @@ export interface TeacherPreview { draftId: string; summary: Record<string, numbe
 export interface TeacherRow { id: string; name: string; email: string | null; active: boolean; materias: number; hasAccount: boolean; manual?: boolean; lastLoginAt: string | null; }
 export interface TeacherAssignment { course: string; paralelo: string; subject: string; specialty?: string | null; manual?: boolean; }
 export interface TeacherDetail { id: string; name: string; email: string | null; active: boolean; hasAccount: boolean; manual: boolean;
-  account: { id: string; role: string; isActive: boolean; lastLoginAt: string | null } | null;
+  account: { id: string; role: string; roles?: string[]; isActive: boolean; lastLoginAt: string | null } | null;
   assignments: TeacherAssignment[]; }
 export interface TeacherCatalog { course: string; paralelos: { code: string; specialty: string | null; subjects: string[] }[]; }
 export interface MailStatus {
@@ -32,7 +32,7 @@ function params(q: Record<string, unknown> = {}): HttpParams {
 }
 
 export interface UserRow {
-  id: string; role: 'STUDENT' | 'TEACHER' | 'ADMIN' | 'SUPERADMIN'; roleLabel: string; email: string | null; username: string | null; name: string | null;
+  id: string; role: 'STUDENT' | 'TEACHER' | 'ADMIN' | 'SUPERADMIN'; roles?: string[]; roleLabel: string; email: string | null; username: string | null; name: string | null;
   isActive: boolean; forcePasswordChange: boolean; tempPasswordExpiresAt: string | null; lastLoginAt: string | null; createdAt: string; legacy: boolean;
   cedula?: string | null; profileCompleted?: boolean; google?: boolean; hasPassword?: boolean;
 }
@@ -84,6 +84,7 @@ export class SaApi {
   createUser(b: Dict) { return this.post<{ user: UserRow; tempPassword: string | null; expiresAt: string | null }>('/users', b); }
   updateUser(id: string, b: Dict) { return this.patch<UserRow>(`/users/${id}`, b); }
   changeRole(id: string, role: string, reason: string) { return this.post<UserRow>(`/users/${id}/role`, { role, reason }); }
+  setRoles(id: string, roles: string[], reason: string) { return this.post<UserRow>(`/users/${id}/roles`, { roles, reason }); }
   deactivate(id: string, reason: string) { return this.post<UserRow>(`/users/${id}/deactivate`, { reason }); }
   /** Eliminación permanente (motivo y correo de la cuenta como confirmación). */
   deleteUser(id: string, reason: string, confirm: string) { return this.post<{ deleted: boolean }>(`/users/${id}/delete`, { reason, confirm }); }

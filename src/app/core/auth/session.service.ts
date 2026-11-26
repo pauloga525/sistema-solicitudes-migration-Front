@@ -9,6 +9,8 @@ export type Role = 'STUDENT' | 'TEACHER' | 'ADMIN' | 'SUPERADMIN';
 export interface SessionUser {
   id: string;
   role: Role;
+  /** Rol principal + adicionales (multirol: p. ej. administrador que también es docente). */
+  roles?: Role[];
   email: string | null;
   username: string | null;
   name: string | null;
@@ -47,6 +49,8 @@ export class SessionService {
   readonly studentEmailSuffix = signal('.est');
   readonly loaded = signal(false);
   readonly role = computed(() => this.user()?.role ?? null);
+  readonly roles = computed<Role[]>(() => { const u = this.user(); return u ? (u.roles?.length ? u.roles : [u.role]) : []; });
+  hasRole(r: Role): boolean { return this.roles().includes(r); }
   readonly displayName = computed(() => {
     const u = this.user();
     return u?.name || u?.username || u?.email || '';

@@ -1,4 +1,5 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
+import { SessionService } from '../../core/auth/session.service';
 import { RouterOutlet } from '@angular/router';
 import { NavGroup, PanelFrame } from '../../shared/ui/panel-frame';
 
@@ -29,8 +30,12 @@ const GROUPS: NavGroup[] = [
   selector: 'app-sa-shell',
   imports: [RouterOutlet, PanelFrame],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  template: `<app-panel-frame [groups]="groups" subtitle="Super administración" home="/superadmin/dashboard"><router-outlet /></app-panel-frame>`,
+  template: `<app-panel-frame [groups]="groups()" subtitle="Super administración" home="/superadmin/dashboard"><router-outlet /></app-panel-frame>`,
 })
 export class SaShell {
-  readonly groups = GROUPS;
+  private readonly session = inject(SessionService);
+  /** Un SUPERADMIN que también es docente ve el acceso a su panel docente. */
+  readonly groups = computed<NavGroup[]>(() => this.session.hasRole('TEACHER')
+    ? GROUPS.map((g) => (g.label === 'Otras áreas' ? { ...g, items: [...g.items, { to: '/docente', label: 'Panel docente', icon: 'co_present' }] } : g))
+    : GROUPS);
 }
