@@ -27,6 +27,15 @@ describe('authInterceptor (cookie + CSRF)', () => {
     expect(p.request.headers.has('Authorization')).toBe(false);
   });
 
+  it('sin cookie legible (backend en otro dominio) usa el token de /auth/session', () => {
+    document.cookie = 'uets_csrf=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/';
+    const http = TestBed.inject(HttpClient);
+    const ctl = TestBed.inject(HttpTestingController);
+    TestBed.inject(SessionService).csrfToken.set('desde-session');
+    http.post(`${API_URL}/requests`, {}).subscribe();
+    expect(ctl.expectOne(`${API_URL}/requests`).request.headers.get('X-CSRF-Token')).toBe('desde-session');
+  });
+
   it('un 401 con sesión abierta vuelve al ingreso; un 403 de contraseña temporal lleva a cambiarla', () => {
     const http = TestBed.inject(HttpClient);
     const ctl = TestBed.inject(HttpTestingController);

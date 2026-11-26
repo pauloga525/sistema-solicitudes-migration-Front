@@ -14,4 +14,12 @@
   <FilesMatch "^(index\.html|env\.js)$">
     Header set Cache-Control "no-cache, no-store, must-revalidate"
   </FilesMatch>
+
+  # El .htaccess de public_html (sitio principal) envía
+  # "Cross-Origin-Opener-Policy: same-origin", que rompe la ventana de
+  # Ingreso con Google (queda en blanco). Aquí se reemplaza solo para
+  # academico.uets.edu.ec por el valor que recomienda Google.
+  Header unset Cross-Origin-Opener-Policy
+  Header always unset Cross-Origin-Opener-Policy
+  Header always set Cross-Origin-Opener-Policy "same-origin-allow-popups"
 </IfModule>

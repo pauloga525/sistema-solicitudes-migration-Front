@@ -22,7 +22,9 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const session = inject(SessionService);
   const router = inject(Router);
   let headers = req.headers;
-  const csrf = readCookie('uets_csrf');
+  // Mismo sitio: se lee la cookie. Backend en otro dominio: no se puede leer y se usa el token
+  // que devolvió GET /auth/session.
+  const csrf = readCookie('uets_csrf') ?? session.csrfToken();
   if (UNSAFE.has(req.method) && csrf) headers = headers.set('X-CSRF-Token', csrf);
   const isAuthCall = req.url.startsWith(`${API_URL}/auth/`);
   return next(req.clone({ headers, withCredentials: true })).pipe(
