@@ -85,11 +85,13 @@ import { Evaluation, MeApi, MyRequest, StudentNotice } from './me-api.service';
                       } @else if (e.track === 'no_asistio') {
                         <span class="ev miss"><span class="material-symbols-outlined" aria-hidden="true">event_busy</span>No te presentaste a la evaluación@if (e.scheduledAt) { del {{ when(e.scheduledAt) }} }</span>
                       }
+                    } @else if (r.status !== 'cancelado' && r.status !== 'rechazado') {
+                      <span class="ev wait"><span class="material-symbols-outlined" aria-hidden="true">schedule</span>Fecha de evaluación: por confirmar (la fija tu docente)</span>
                     }
                   </li>
                 }
               </ul>
-              <p class="muted small">Evaluación de Mejora · {{ course(r.course) }} {{ r.paralelo }} · enviada el {{ dt(r.createdAt) }}</p>
+              <p class="muted small">Evaluación de Mejora · {{ course(r.course) }} {{ r.paralelo }} · solicitud enviada el {{ dt(r.createdAt) }}</p>
               @if (r.status === 'rechazado' && r.rejectionReason) { <p class="reason">Motivo: {{ r.rejectionReason }}</p> }
               <div class="act">
                 <button type="button" class="btn btn-outline btn-sm" (click)="pdf(r)"><span class="material-symbols-outlined" aria-hidden="true">download</span>Comprobante PDF</button>
@@ -123,6 +125,7 @@ import { Evaluation, MeApi, MyRequest, StudentNotice } from './me-api.service';
     .evnote { display: flex; align-items: flex-start; gap: 6px; flex-basis: 100%; margin-top: 4px; padding: 6px 10px; border-radius: 8px;
       background: #fff6d6; color: #4a3800; font: var(--body-md); font-size: 0.875rem; }
     .evnote .material-symbols-outlined { font-size: 16px; margin-top: 2px; }
+    .ev.wait { background: var(--surface-container-high); color: var(--on-surface-variant); }
     .ev.miss { background: var(--error-container); color: var(--on-error-container); }
     .news .bell { color: #5c4700; font-size: 20px; }
     .nl { list-style: none; margin: 0; padding: 4px 0; }
